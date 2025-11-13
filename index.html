@@ -462,7 +462,7 @@
         <button id="btnFecharAdmin" class="btn btn-primaria" style="margin-top:8px; margin-bottom:6px;">
             ⬅ Fechar área administrativa
         </button>
-        <small>Aqui aparecem todas as inscrições com detalhes e relatórios por modalidade/turma.</small>
+        <small>Aqui aparecem todas as inscrições com detalhes e relatórios para chaveamento.</small>
 
         <!-- BUSCA DE ALUNO -->
         <div class="admin-actions">
@@ -478,7 +478,7 @@
             <h3>Autorizar nome com 2 nomes</h3>
             <p style="font-size:0.84rem; margin:4px 0 8px;">
                 Nomes com <strong>3 ou mais palavras</strong> entram normalmente.<br>
-                Se um aluno tiver apenas <strong>2 nomes</strong e você quiser liberar, digite o nome exatamente como ele será escrito no formulário e clique em <em>"Autorizar"</em>.
+                Se um aluno tiver apenas <strong>2 nomes</strong> e você quiser liberar, digite o nome exatamente como ele será escrito no formulário e clique em <em>"Autorizar"</em>.
             </p>
             <div style="display:flex; flex-wrap:wrap; gap:6px;">
                 <input type="text" id="nomeExcecao" placeholder="Nome a ser autorizado (igual o aluno vai digitar)" style="flex:1; min-width:200px;" />
@@ -501,25 +501,54 @@
             </div>
         </div>
 
-        <!-- RELATÓRIO POR MODALIDADE / TURMA -->
+        <!-- RELATÓRIO POR MODALIDADE / TURMA (COM BOTÃO) -->
         <div class="admin-actions">
             <h3>Relatório por modalidade / turma</h3>
             <p style="font-size:0.84rem; margin:4px 0 8px;">
-                Resumo de inscritos por modalidade e turma. Útil para montar os chaveamentos por jogo.
+                Selecione a turma e a modalidade, clique em <strong>Relatório</strong> e depois em <strong>Imprimir relatório</strong> para usar no chaveamento.
             </p>
-            <table id="tabelaResumo">
+            <div class="filtros">
+                <div>
+                    <label for="relTurma">Turma</label>
+                    <select id="relTurma">
+                        <option value="">Selecione...</option>
+                        <!-- turmas via JS -->
+                    </select>
+                </div>
+                <div>
+                    <label for="relModalidade">Modalidade</label>
+                    <select id="relModalidade">
+                        <option value="">Selecione...</option>
+                        <!-- modalidades via JS -->
+                    </select>
+                </div>
+                <div style="align-self:flex-end;">
+                    <button id="btnGerarRelatorio" class="btn btn-primaria">📄 Gerar relatório</button>
+                </div>
+            </div>
+
+            <table id="tabelaRelatorio">
                 <thead>
                     <tr>
-                        <th>Modalidade</th>
+                        <th>Nome</th>
+                        <th>E-mail</th>
+                        <th>Sexo</th>
                         <th>Turma</th>
-                        <th>Total</th>
-                        <th>Detalhes</th>
+                        <th>Turno</th>
+                        <th>Nº camisa</th>
+                        <th>Modalidades</th>
+                        <th>Observações</th>
+                        <th>Data/Hora</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- via JS -->
+                    <!-- preenchido pelo botão -->
                 </tbody>
             </table>
+
+            <button id="btnImprimirRelatorio" class="btn btn-primaria" style="margin-top:8px;">
+                🖨️ Imprimir relatório
+            </button>
         </div>
 
         <div style="margin-top:14px;">
@@ -672,6 +701,8 @@ function initInterclasse() {
     const filtroTurma = document.getElementById("filtroTurma");
     const filtroModalidade = document.getElementById("filtroModalidade");
     const modalidadesContainer = document.getElementById("modalidadesContainer");
+    const relTurma = document.getElementById("relTurma");
+    const relModalidade = document.getElementById("relModalidade");
 
     if (!selectTurma || !selectTurno || !filtroTurma || !filtroModalidade || !modalidadesContainer) {
         console.error("Erro ao carregar elementos principais. Verifique o HTML.");
@@ -730,6 +761,24 @@ function initInterclasse() {
         opt.textContent = m;
         filtroModalidade.appendChild(opt);
     });
+
+    // Selects do relatório (turma / modalidade)
+    if (relTurma) {
+        TURMAS.forEach(function(t) {
+            const opt = document.createElement("option");
+            opt.value = t;
+            opt.textContent = t;
+            relTurma.appendChild(opt);
+        });
+    }
+    if (relModalidade) {
+        MODALIDADES.forEach(function(m) {
+            const opt = document.createElement("option");
+            opt.value = m;
+            opt.textContent = m;
+            relModalidade.appendChild(opt);
+        });
+    }
 
     // Checkboxes de modalidades
     MODALIDADES.forEach(function(mod) {
@@ -835,6 +884,10 @@ function initInterclasse() {
     // Busca admin
     document.getElementById("adminSearch").addEventListener("input", filtrarTabelaAdminPorNome);
 
+    // Botões de relatório
+    document.getElementById("btnGerarRelatorio").addEventListener("click", gerarRelatorio);
+    document.getElementById("btnImprimirRelatorio").addEventListener("click", imprimirRelatorio);
+
     // Listeners em tempo real
     iniciarListenerInscricoes();
     iniciarListenerExcecoes();
@@ -906,7 +959,7 @@ function iniciarListenerInscricoes() {
             renderizarTabelaPublica();
             renderizarTabelaAdmin();
             atualizarSelectCancelar();
-            renderizarResumoModalidades();
+            // tabela de relatório é montada só quando clicar no botão
         }, function(error) {
             console.error("Erro ao ouvir inscrições:", error);
         });
@@ -1389,63 +1442,98 @@ async function handleCancelarInscricao() {
     }
 }
 
-/* ============= 14) RELATÓRIO POR MODALIDADE / TURMA ============= */
+/* ============= 14) RELATÓRIO POR MODALIDADE / TURMA (BOTÃO) ============= */
 
-function renderizarResumoModalidades() {
-    if (!isAdmin) return;
-    const corpo = document.querySelector("#tabelaResumo tbody");
+function gerarRelatorio() {
+    if (!isAdmin) {
+        alert("Apenas a área administrativa pode gerar relatórios.");
+        return;
+    }
+    const turmaSel = document.getElementById("relTurma").value;
+    const modSel = document.getElementById("relModalidade").value;
+    const corpo = document.querySelector("#tabelaRelatorio tbody");
     if (!corpo) return;
     corpo.innerHTML = "";
 
-    const turmas = Object.keys(countsPorTurmaModalidade);
-    turmas.sort();
+    if (!turmaSel || !modSel) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 9;
+        td.textContent = "Selecione a turma e a modalidade para gerar o relatório.";
+        tr.appendChild(td);
+        corpo.appendChild(tr);
+        return;
+    }
 
-    for (let t = 0; t < turmas.length; t++) {
-        const turma = turmas[t];
-        const modsObj = countsPorTurmaModalidade[turma] || {};
-        const mods = Object.keys(modsObj);
-        mods.sort();
-
-        for (let m = 0; m < mods.length; m++) {
-            const mod = mods[m];
-            const total = modsObj[mod] || 0;
-            const tr = document.createElement("tr");
-
-            const tdMod = document.createElement("td");
-            const tdTurma = document.createElement("td");
-            const tdTotal = document.createElement("td");
-            const tdDetalhe = document.createElement("td");
-
-            tdMod.textContent = mod;
-            tdTurma.textContent = turma;
-            tdTotal.textContent = total;
-
-            if (mod === "QUEIMADA MISTA") {
-                const gen = countsQueimadaGenero[turma] || { Masculino: 0, Feminino: 0 };
-                const qtdM = gen.Masculino || 0;
-                const qtdF = gen.Feminino || 0;
-                tdDetalhe.textContent = "Meninas: " + qtdF + "/5 | Meninos: " + qtdM + "/5";
-            } else {
-                const limite = LIMITE_MODALIDADE_TURMA[mod] || 8;
-                tdDetalhe.textContent = "Limite por turma: " + limite;
-            }
-
-            tr.appendChild(tdMod);
-            tr.appendChild(tdTurma);
-            tr.appendChild(tdTotal);
-            tr.appendChild(tdDetalhe);
-            corpo.appendChild(tr);
+    const listaFiltrada = [];
+    for (let i = 0; i < todasInscricoes.length; i++) {
+        const ins = todasInscricoes[i];
+        if (ins.turma === turmaSel && ins.modalidades && ins.modalidades.indexOf(modSel) !== -1) {
+            listaFiltrada.push(ins);
         }
     }
 
-    if (!turmas.length) {
+    if (listaFiltrada.length === 0) {
         const tr = document.createElement("tr");
         const td = document.createElement("td");
-        td.colSpan = 4;
-        td.textContent = "Ainda não há inscritos para gerar relatório.";
+        td.colSpan = 9;
+        td.textContent = "Não há inscritos para essa turma e modalidade.";
         tr.appendChild(td);
         corpo.appendChild(tr);
+        return;
     }
+
+    for (let i = 0; i < listaFiltrada.length; i++) {
+        const ins = listaFiltrada[i];
+        const tr = document.createElement("tr");
+
+        const tdNome = document.createElement("td");
+        const tdEmail = document.createElement("td");
+        const tdSexo = document.createElement("td");
+        const tdTurma = document.createElement("td");
+        const tdTurno = document.createElement("td");
+        const tdCamisa = document.createElement("td");
+        const tdMods = document.createElement("td");
+        const tdObs = document.createElement("td");
+        const tdData = document.createElement("td");
+
+        tdNome.textContent = ins.nome || "";
+        tdEmail.textContent = ins.email || "";
+        tdSexo.textContent = ins.sexo || "";
+        tdTurma.textContent = ins.turma || "";
+        tdTurno.textContent = ins.turno || "";
+        tdCamisa.textContent = ins.camisaNumero || "";
+        tdMods.textContent = (ins.modalidades || []).join(", ");
+        tdObs.textContent = ins.observacoes || "";
+
+        if (ins.timestamp && ins.timestamp.toDate) {
+            const d = ins.timestamp.toDate();
+            const dataStr = d.toLocaleDateString("pt-BR");
+            const horaStr = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+            tdData.textContent = dataStr + " " + horaStr;
+        } else {
+            tdData.textContent = "-";
+        }
+
+        tr.appendChild(tdNome);
+        tr.appendChild(tdEmail);
+        tr.appendChild(tdSexo);
+        tr.appendChild(tdTurma);
+        tr.appendChild(tdTurno);
+        tr.appendChild(tdCamisa);
+        tr.appendChild(tdMods);
+        tr.appendChild(tdObs);
+        tr.appendChild(tdData);
+        corpo.appendChild(tr);
+    }
+}
+
+function imprimirRelatorio() {
+    if (!isAdmin) {
+        alert("Apenas a área administrativa pode imprimir relatórios.");
+        return;
+    }
+    window.print();
 }
 
 /* ============= 15) TROCA DE TELAS (ALUNO / INSCRITOS / ADMIN) ============= */
@@ -1485,7 +1573,6 @@ function abrirAdmin() {
     secInscritos.style.display = "none";
     admin.style.display = "block";
     renderizarTabelaAdmin();
-    renderizarResumoModalidades();
     admin.scrollIntoView({ behavior: "smooth" });
 }
 
