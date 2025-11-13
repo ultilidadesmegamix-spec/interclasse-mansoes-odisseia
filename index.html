@@ -4,6 +4,11 @@
     <meta charset="UTF-8" />
     <title>Inscrições Movimenta Odisseia</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Evitar cache em celular / navegador -->
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
     <!-- Firebase (compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -432,7 +437,16 @@
 'use strict';
 
 /* ============= 1) FIREBASE ============= */
-// Import the functions you need from the SDKs you need import { initializeApp } from "firebase/app"; // TODO: Add SDKs for Firebase products that you want to use // https://firebase.google.com/docs/web/setup#available-libraries // Your web app's Firebase configuration const firebaseConfig = { apiKey: "AIzaSyDLj4HyYyd61mvNOWtnjoZbo-dtOckq9ho", authDomain: "interclasse-movimenta-odisseia.firebaseapp.com", projectId: "interclasse-movimenta-odisseia", storageBucket: "interclasse-movimenta-odisseia.firebasestorage.app", messagingSenderId: "435082187457", appId: "1:435082187457:web:d46d4def41c170ab4cfa40" }; // Initialize Firebase const app = initializeApp(firebaseConfig);
+// TROQUE PELOS DADOS REAIS DO SEU PROJETO FIREBASE
+const firebaseConfig = {
+    apiKey: "SUA_API_KEY_AQUI",
+    authDomain: "SEU_PROJETO.firebaseapp.com",
+    projectId: "SEU_PROJECT_ID",
+    storageBucket: "SEU_PROJECT_ID.appspot.com",
+    messagingSenderId: "SENDER_ID",
+    appId: "APP_ID"
+};
+
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
@@ -567,7 +581,7 @@ function initInterclasse() {
 
         const vagas = document.createElement("span");
         vagas.className = "modalidade-vagas";
-        vagas.dataset.modLabel = mod;
+        vagas.dataset.mod = mod;
         vagas.textContent = "Selecione turno e turma para ver as vagas.";
 
         infoDiv.appendChild(lbl);
@@ -655,8 +669,12 @@ function initInterclasse() {
     iniciarListenerExcecoes();
 }
 
-// rodar quando a página terminar de carregar (PC e celular)
-window.addEventListener("load", initInterclasse);
+// Garantir que inicia em qualquer navegador (PC e celular)
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initInterclasse);
+} else {
+    initInterclasse();
+}
 
 /* ============= 6) LISTENERS FIRESTORE ============= */
 
@@ -808,6 +826,8 @@ async function handleSubmitInscricao(event) {
         });
 
         mostrarMensagemForm("Inscrição realizada com sucesso! ✅", true);
+
+        // 🔁 Zera o formulário para o próximo aluno
         document.getElementById("formInscricao").reset();
         document.getElementById("turma").innerHTML = '<option value="">Selecione o turno primeiro...</option>';
         document.getElementById("turma").disabled = true;
@@ -822,24 +842,12 @@ async function handleSubmitInscricao(event) {
 
 function atualizarDisponibilidadeModalidades() {
     const turma = document.getElementById("turma").value;
-    const spans = document.querySelectorAll("[data-modLabel], [data-modlabel]");
+    const spans = document.querySelectorAll(".modalidade-vagas");
     const checkboxes = document.querySelectorAll(".chkModalidade");
 
-    const spansCorrigidos = [];
     for (let i = 0; i < spans.length; i++) {
-        spansCorrigidos.push(spans[i]);
-    }
-    const spansVagas = document.querySelectorAll(".modalidade-vagas");
-    for (let i = 0; i < spansVagas.length; i++) {
-        const span = spansVagas[i];
-        const mod = span.getAttribute("data-modLabel") || span.getAttribute("data-modlabel") || span.textContent.split(" (")[0];
-        span.setAttribute("data-modLabel", mod);
-    }
-
-    const spans2 = document.querySelectorAll("[data-modLabel]");
-    for (let i = 0; i < spans2.length; i++) {
-        const span = spans2[i];
-        const mod = span.getAttribute("data-modLabel");
+        const span = spans[i];
+        const mod = span.dataset.mod;
         if (!turma) {
             span.textContent = mod + " (selecione turno e turma primeiro)";
             span.classList.remove("modalidade-lotado");
