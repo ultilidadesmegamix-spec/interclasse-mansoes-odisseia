@@ -438,14 +438,23 @@
 
 /* ============= 1) FIREBASE ============= */
 // TROQUE PELOS DADOS REAIS DO SEU PROJETO FIREBASE
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
 const firebaseConfig = {
-    apiKey: "SUA_API_KEY_AQUI",
-    authDomain: "SEU_PROJETO.firebaseapp.com",
-    projectId: "SEU_PROJECT_ID",
-    storageBucket: "SEU_PROJECT_ID.appspot.com",
-    messagingSenderId: "SENDER_ID",
-    appId: "APP_ID"
+  apiKey: "AIzaSyAxB-FrZNQ7DE-e_YJOvNkkwAaCToH9nd8",
+  authDomain: "inscricoes-movimenta.firebaseapp.com",
+  projectId: "inscricoes-movimenta",
+  storageBucket: "inscricoes-movimenta.firebasestorage.app",
+  messagingSenderId: "383820865072",
+  appId: "1:383820865072:web:c8602b5c2cbcd5884057f5"
 };
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
