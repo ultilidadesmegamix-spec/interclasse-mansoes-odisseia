@@ -9,7 +9,7 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
 
-    <!-- Firebase compat (NÃO MEXER) -->
+    <!-- Firebase (compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -32,6 +32,55 @@
             background: #f0f4fb;
             color: var(--texto);
         }
+
+        /* Overlay de e-mail */
+        #emailOverlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        #emailOverlayCard {
+            background: #ffffff;
+            padding: 20px 18px;
+            border-radius: 12px;
+            max-width: 380px;
+            width: 90%;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        }
+        #emailOverlayCard h2 {
+            margin: 0 0 6px;
+            font-size: 1.1rem;
+            color: var(--azul);
+        }
+        #emailOverlayCard p {
+            margin: 4px 0 10px;
+            font-size: 0.9rem;
+            color: #444;
+        }
+        #emailOverlayCard input {
+            width: 100%;
+            padding: 8px 9px;
+            border-radius: 8px;
+            border: 1px solid var(--borda);
+            background: #fafbff;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+        #emailOverlayCard .btn {
+            width: 100%;
+            justify-content: center;
+        }
+        #msgEmailOverlay {
+            font-size: 0.8rem;
+            color: var(--vermelho);
+            margin-bottom: 6px;
+            min-height: 14px;
+        }
+
         header {
             background: linear-gradient(90deg, var(--azul) 0%, #007bff 100%);
             color: #fff;
@@ -260,9 +309,28 @@
         #secInscritos {
             display: none;
         }
+
+        /* Campo de busca admin */
+        #adminSearch {
+            width: 100%;
+            max-width: 300px;
+            margin-top: 8px;
+        }
     </style>
 </head>
 <body>
+
+<!-- OVERLAY DE E-MAIL -->
+<div id="emailOverlay">
+    <div id="emailOverlayCard">
+        <h2>Antes de continuar...</h2>
+        <p>Informe seu <strong>e-mail</strong> para registrar sua inscrição no Movimenta Odisseia.</p>
+        <div id="msgEmailOverlay"></div>
+        <input type="text" id="emailAluno" placeholder="Digite seu e-mail" />
+        <button id="btnEntrarEmail" class="btn btn-primaria">Entrar no sistema</button>
+    </div>
+</div>
+
 <header>
     <div>
         <h1>Inscrições Movimenta Odisseia</h1>
@@ -282,7 +350,7 @@
     <!-- FORMULÁRIO DE INSCRIÇÃO -->
     <section class="card" id="secInscricao">
         <h2>Formulário de inscrição</h2>
-        <small>Preencha seus dados e escolha até <strong>2 modalidades</strong>. As vagas são limitadas (8 por turma em cada modalidade).</small>
+        <small>Preencha seus dados e escolha até <strong>2 modalidades</strong>.</small>
 
         <div id="msgForm"></div>
 
@@ -290,8 +358,19 @@
             <div class="grid-2">
                 <div>
                     <label for="nome">Nome completo</label>
-                    <input type="text" id="nome" placeholder="Digite seu nome completo (mínimo 4 nomes)" required />
+                    <input type="text" id="nome" placeholder="Ex: Victor Hugo Silva Miranda" required />
                 </div>
+                <div>
+                    <label for="sexo">Sexo</label>
+                    <select id="sexo" required>
+                        <option value="">Selecione...</option>
+                        <option value="Feminino">Feminino</option>
+                        <option value="Masculino">Masculino</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid-2" style="margin-top:10px;">
                 <div>
                     <label for="turno">Turno</label>
                     <select id="turno" required>
@@ -301,13 +380,12 @@
                         <option value="Noturno">Noturno</option>
                     </select>
                 </div>
-            </div>
-
-            <div style="margin-top:10px;">
-                <label for="turma">Turma</label>
-                <select id="turma" required>
-                    <option value="">Selecione o turno primeiro...</option>
-                </select>
+                <div>
+                    <label for="turma">Turma</label>
+                    <select id="turma" required>
+                        <option value="">Selecione o turno primeiro...</option>
+                    </select>
+                </div>
             </div>
 
             <div class="grid-2" style="margin-top:10px;">
@@ -324,8 +402,9 @@
             <div style="margin-top:14px;">
                 <label>Modalidades (máximo 2 por aluno)</label>
                 <p class="alerta">
-                    ✅ Você pode marcar até <strong>2 modalidades</strong>.<br>
-                    ⚠️ Se uma modalidade aparecer como <strong>LOTADA</strong> para a sua turma, escolha outra.
+                    ✅ FUTSAL: 8 pessoas por turma.<br>
+                    ✅ DOMINÓ / FUTMESA / XADREZ / TÊNIS DE MESA: 2 pessoas por turma.<br>
+                    ✅ QUEIMADA MISTA: até 5 meninas e 5 meninos por turma.
                 </p>
                 <div class="modalidades-lista" id="modalidadesContainer">
                     <!-- preenchido via JS -->
@@ -333,7 +412,7 @@
             </div>
 
             <div style="margin-top:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                <span class="pill-info">As inscrições são atualizadas em tempo real. Depois clique em "Ver inscritos" para ver quem já está inscrito.</span>
+                <span class="pill-info">As inscrições são atualizadas em tempo real. Use "Ver inscritos" para ver o geral.</span>
                 <button type="submit" class="btn btn-primaria">
                     ✅ Enviar inscrição
                 </button>
@@ -383,13 +462,23 @@
         <button id="btnFecharAdmin" class="btn btn-primaria" style="margin-top:8px; margin-bottom:6px;">
             ⬅ Fechar área administrativa
         </button>
-        <small>Aqui aparecem todas as inscrições com detalhes, além de um controle para autorizar nomes com menos de 4 nomes e cancelar inscrições.</small>
+        <small>Aqui aparecem todas as inscrições com detalhes e relatórios por modalidade/turma.</small>
+
+        <!-- BUSCA DE ALUNO -->
+        <div class="admin-actions">
+            <h3>Buscar aluno</h3>
+            <p style="font-size:0.84rem; margin:4px 0 8px;">
+                Digite o nome (ou parte do nome) para localizar na tabela de inscrições.
+            </p>
+            <input type="text" id="adminSearch" placeholder="Buscar por nome..." />
+        </div>
 
         <!-- BLOCO DE EXCEÇÕES DE NOME -->
         <div class="admin-actions">
-            <h3>Autorizar nome com menos de 4 nomes</h3>
+            <h3>Autorizar nome com 2 nomes</h3>
             <p style="font-size:0.84rem; margin:4px 0 8px;">
-                Se algum aluno tiver nome com menos de 4 nomes e você quiser liberar a inscrição dele, digite o nome exatamente como ele será escrito no formulário e clique em <em>"Autorizar"</em>.
+                Nomes com <strong>3 ou mais palavras</strong> entram normalmente.<br>
+                Se um aluno tiver apenas <strong>2 nomes</strong e você quiser liberar, digite o nome exatamente como ele será escrito no formulário e clique em <em>"Autorizar"</em>.
             </p>
             <div style="display:flex; flex-wrap:wrap; gap:6px;">
                 <input type="text" id="nomeExcecao" placeholder="Nome a ser autorizado (igual o aluno vai digitar)" style="flex:1; min-width:200px;" />
@@ -412,11 +501,34 @@
             </div>
         </div>
 
+        <!-- RELATÓRIO POR MODALIDADE / TURMA -->
+        <div class="admin-actions">
+            <h3>Relatório por modalidade / turma</h3>
+            <p style="font-size:0.84rem; margin:4px 0 8px;">
+                Resumo de inscritos por modalidade e turma. Útil para montar os chaveamentos por jogo.
+            </p>
+            <table id="tabelaResumo">
+                <thead>
+                    <tr>
+                        <th>Modalidade</th>
+                        <th>Turma</th>
+                        <th>Total</th>
+                        <th>Detalhes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- via JS -->
+                </tbody>
+            </table>
+        </div>
+
         <div style="margin-top:14px;">
             <table id="tabelaAdmin">
                 <thead>
                     <tr>
                         <th>Nome</th>
+                        <th>E-mail</th>
+                        <th>Sexo</th>
                         <th>Turma</th>
                         <th>Turno</th>
                         <th>Nº camisa</th>
@@ -437,7 +549,8 @@
 'use strict';
 
 /* ============= 1) FIREBASE ============= */
-// Usando SEU firebaseConfig correto (compat JS, sem "import")
+
+// Config do seu projeto:
 const firebaseConfig = {
   apiKey: "AIzaSyAxB-FrZNQ7DE-e_YJOvNkkwAaCToH9nd8",
   authDomain: "inscricoes-movimenta.firebaseapp.com",
@@ -489,18 +602,31 @@ const TURMAS_NOTURNO = [
     "3ºA","3ºB","3ºC"
 ];
 
-const LIMITE_POR_MODALIDADE_TURMA = 8;
+// Limites por modalidade (exceto Queimada Mista, que é por sexo)
+const LIMITE_MODALIDADE_TURMA = {
+    "FUTSAL": 8,
+    "DOMINÓ": 2,
+    "FUTMESA": 2,
+    "TÊNIS DE MESA": 2,
+    "XADREZ": 2
+};
+
+const LIMITE_QUEIMADA_TOTAL = 10; // 5 meninas + 5 meninos
+const LIMITE_QUEIMADA_POR_SEXO = 5;
+
 const LIMITE_MODALIDADES_POR_ALUNO = 2;
 const ADMIN_PASSWORD = "movimenta2025";
 
 /* ============= 3) ESTADO ============= */
 
 let countsPorTurmaModalidade = {};
+let countsQueimadaGenero = {}; // { turma: { Masculino: n, Feminino: n } }
 let todasInscricoes = [];
 let isAdmin = false;
 let adminAberto = false;
 let mostrandoInscritos = false;
 let nomesExcecao = [];
+let emailAtual = null;
 
 /* ============= 4) AUXILIARES ============= */
 
@@ -531,11 +657,18 @@ function getTurmasPorTurno(turno) {
     return [];
 }
 
+function validarEmail(email) {
+    if (!email) return false;
+    // validação simples
+    return email.includes("@") && email.includes(".");
+}
+
 /* ============= 5) INICIALIZAÇÃO ============= */
 
 function initInterclasse() {
     const selectTurma = document.getElementById("turma");
     const selectTurno = document.getElementById("turno");
+    const selectSexo = document.getElementById("sexo");
     const filtroTurma = document.getElementById("filtroTurma");
     const filtroModalidade = document.getElementById("filtroModalidade");
     const modalidadesContainer = document.getElementById("modalidadesContainer");
@@ -544,6 +677,40 @@ function initInterclasse() {
         console.error("Erro ao carregar elementos principais. Verifique o HTML.");
         return;
     }
+
+    // Overlay de e-mail
+    const overlay = document.getElementById("emailOverlay");
+    const emailInput = document.getElementById("emailAluno");
+    const btnEntrarEmail = document.getElementById("btnEntrarEmail");
+    const msgEmailOverlay = document.getElementById("msgEmailOverlay");
+
+    function liberarComEmail() {
+        const valor = (emailInput.value || "").trim();
+        if (!validarEmail(valor)) {
+            msgEmailOverlay.textContent = "Digite um e-mail válido.";
+            return;
+        }
+        emailAtual = valor;
+        localStorage.setItem("emailAlunoMovimenta", valor);
+        overlay.style.display = "none";
+    }
+
+    // Se já tiver e-mail salvo no dispositivo, não mostra overlay
+    const salvo = localStorage.getItem("emailAlunoMovimenta");
+    if (salvo && validarEmail(salvo)) {
+        emailAtual = salvo;
+        overlay.style.display = "none";
+    } else {
+        overlay.style.display = "flex";
+    }
+
+    btnEntrarEmail.addEventListener("click", liberarComEmail);
+    emailInput.addEventListener("keydown", function(e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            liberarComEmail();
+        }
+    });
 
     // Turma desabilitada até escolher turno
     selectTurma.disabled = true;
@@ -627,8 +794,9 @@ function initInterclasse() {
         atualizarDisponibilidadeModalidades();
     });
 
-    // Turma muda → atualiza vagas
+    // Turma / Sexo mudam → atualiza vagas
     selectTurma.addEventListener("change", atualizarDisponibilidadeModalidades);
+    selectSexo.addEventListener("change", atualizarDisponibilidadeModalidades);
 
     // Filtros da tabela pública
     filtroTurma.addEventListener("change", renderizarTabelaPublica);
@@ -664,6 +832,9 @@ function initInterclasse() {
     // Cancelar inscrição
     document.getElementById("btnCancelarInscricao").addEventListener("click", handleCancelarInscricao);
 
+    // Busca admin
+    document.getElementById("adminSearch").addEventListener("input", filtrarTabelaAdminPorNome);
+
     // Listeners em tempo real
     iniciarListenerInscricoes();
     iniciarListenerExcecoes();
@@ -684,27 +855,31 @@ function iniciarListenerInscricoes() {
         .onSnapshot(function(snapshot) {
             todasInscricoes = [];
             countsPorTurmaModalidade = {};
+            countsQueimadaGenero = {};
 
             snapshot.forEach(function(doc) {
                 const data = doc.data();
                 const nome = data.nome || "";
                 const nomeNormalizado = data.nomeNormalizado || normalizarNome(nome);
+                const sexo = data.sexo || "";
+                const turma = data.turma;
+                const modalidades = data.modalidades || [];
 
                 const registro = {
                     id: doc.id,
                     nome: nome,
                     nomeNormalizado: nomeNormalizado,
-                    turma: data.turma,
+                    email: data.email || "",
+                    sexo: sexo,
+                    turma: turma,
                     turno: data.turno,
                     camisaNumero: data.camisaNumero,
-                    modalidades: data.modalidades || [],
+                    modalidades: modalidades,
                     observacoes: data.observacoes,
                     timestamp: data.timestamp
                 };
                 todasInscricoes.push(registro);
 
-                const turma = data.turma;
-                const modalidades = data.modalidades || [];
                 if (!countsPorTurmaModalidade[turma]) {
                     countsPorTurmaModalidade[turma] = {};
                 }
@@ -713,6 +888,17 @@ function iniciarListenerInscricoes() {
                         countsPorTurmaModalidade[turma][m] = 0;
                     }
                     countsPorTurmaModalidade[turma][m]++;
+
+                    if (m === "QUEIMADA MISTA") {
+                        if (!countsQueimadaGenero[turma]) {
+                            countsQueimadaGenero[turma] = { Masculino: 0, Feminino: 0 };
+                        }
+                        if (sexo === "Masculino") {
+                            countsQueimadaGenero[turma].Masculino++;
+                        } else if (sexo === "Feminino") {
+                            countsQueimadaGenero[turma].Feminino++;
+                        }
+                    }
                 });
             });
 
@@ -720,6 +906,7 @@ function iniciarListenerInscricoes() {
             renderizarTabelaPublica();
             renderizarTabelaAdmin();
             atualizarSelectCancelar();
+            renderizarResumoModalidades();
         }, function(error) {
             console.error("Erro ao ouvir inscrições:", error);
         });
@@ -749,7 +936,13 @@ function iniciarListenerExcecoes() {
 async function handleSubmitInscricao(event) {
     event.preventDefault();
 
+    if (!emailAtual || !validarEmail(emailAtual)) {
+        alert("Informe seu e-mail antes de fazer a inscrição.");
+        return;
+    }
+
     const nome = document.getElementById("nome").value.trim();
+    const sexo = document.getElementById("sexo").value;
     const turma = document.getElementById("turma").value;
     const turno = document.getElementById("turno").value;
     const camisaNumero = document.getElementById("camisaNumero").value.trim();
@@ -764,8 +957,8 @@ async function handleSubmitInscricao(event) {
     const qtdPartes = partesNome.length;
     const nomeNormalizado = normalizarNome(nome);
 
-    // Nome com menos de 4 palavras só entra se for exceção
-    if (qtdPartes < 4) {
+    // Nome com 2 palavras ou menos precisa de exceção
+    if (qtdPartes <= 2) {
         let autorizado = false;
         for (let i = 0; i < nomesExcecao.length; i++) {
             if (nomesExcecao[i].nomeNormalizado === nomeNormalizado) {
@@ -775,15 +968,15 @@ async function handleSubmitInscricao(event) {
         }
         if (!autorizado) {
             mostrarMensagemForm(
-                "Seu nome tem menos de três nomes. Envie uma mensagem no chat do Instagram do colégio para análise da coordenação.",
+                "Seu nome possui apenas 2 palavras. Procure a coordenação para que seu nome seja autorizado na área administrativa.",
                 false
             );
             return;
         }
     }
 
-    if (!nome || !turma || !turno) {
-        mostrarMensagemForm("Preencha nome, turno e turma.", false);
+    if (!nome || !sexo || !turma || !turno) {
+        mostrarMensagemForm("Preencha nome, sexo, turno e turma.", false);
         return;
     }
     if (selecionados.length === 0) {
@@ -795,13 +988,46 @@ async function handleSubmitInscricao(event) {
         return;
     }
 
-    // Verificar vagas da turma
+    // Verificar vagas da turma por modalidade
     for (let i = 0; i < selecionados.length; i++) {
         const mod = selecionados[i];
-        const qtdAtual = (countsPorTurmaModalidade[turma] && countsPorTurmaModalidade[turma][mod]) ? countsPorTurmaModalidade[turma][mod] : 0;
-        if (qtdAtual >= LIMITE_POR_MODALIDADE_TURMA) {
-            mostrarMensagemForm('A modalidade "' + mod + '" está LOTADA para a turma ' + turma + '. Escolha outra modalidade.', false);
-            return;
+        if (mod === "QUEIMADA MISTA") {
+            const totPorTurma = (countsPorTurmaModalidade[turma] && countsPorTurmaModalidade[turma][mod]) ? countsPorTurmaModalidade[turma][mod] : 0;
+            const gen = countsQueimadaGenero[turma] || { Masculino: 0, Feminino: 0 };
+            const qtdM = gen.Masculino || 0;
+            const qtdF = gen.Feminino || 0;
+
+            if (totPorTurma >= LIMITE_QUEIMADA_TOTAL) {
+                mostrarMensagemForm(
+                    'A QUEIMADA MISTA está LOTADA para a turma ' + turma + ' (10/10).',
+                    false
+                );
+                return;
+            }
+            if (sexo === "Masculino" && qtdM >= LIMITE_QUEIMADA_POR_SEXO) {
+                mostrarMensagemForm(
+                    'Já há 5 meninos na QUEIMADA MISTA da turma ' + turma + '. Escolha outra modalidade.',
+                    false
+                );
+                return;
+            }
+            if (sexo === "Feminino" && qtdF >= LIMITE_QUEIMADA_POR_SEXO) {
+                mostrarMensagemForm(
+                    'Já há 5 meninas na QUEIMADA MISTA da turma ' + turma + '. Escolha outra modalidade.',
+                    false
+                );
+                return;
+            }
+        } else {
+            const limite = LIMITE_MODALIDADE_TURMA[mod] || 8;
+            const qtdAtual = (countsPorTurmaModalidade[turma] && countsPorTurmaModalidade[turma][mod]) ? countsPorTurmaModalidade[turma][mod] : 0;
+            if (qtdAtual >= limite) {
+                mostrarMensagemForm(
+                    'A modalidade "' + mod + '" está LOTADA para a turma ' + turma + ' (' + qtdAtual + '/' + limite + '). Escolha outra modalidade.',
+                    false
+                );
+                return;
+            }
         }
     }
 
@@ -815,10 +1041,11 @@ async function handleSubmitInscricao(event) {
     }
 
     try {
-        // SALVA NO FIRESTORE
         await db.collection("inscricoes").add({
             nome: nome,
             nomeNormalizado: nomeNormalizado,
+            email: emailAtual,
+            sexo: sexo,
             turma: turma,
             turno: turno,
             camisaNumero: camisaNumero || null,
@@ -827,13 +1054,13 @@ async function handleSubmitInscricao(event) {
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // Se chegou aqui, salvou → pode limpar o form
         mostrarMensagemForm("Inscrição realizada com sucesso! ✅", true);
 
         // Zera o formulário para o próximo aluno
         document.getElementById("formInscricao").reset();
-        document.getElementById("turma").innerHTML = '<option value="">Selecione o turno primeiro...</option>';
-        document.getElementById("turma").disabled = true;
+        const selectTurma = document.getElementById("turma");
+        selectTurma.innerHTML = '<option value="">Selecione o turno primeiro...</option>';
+        selectTurma.disabled = true;
         atualizarDisponibilidadeModalidades();
     } catch (error) {
         console.error("Erro ao salvar inscrição:", error);
@@ -845,6 +1072,7 @@ async function handleSubmitInscricao(event) {
 
 function atualizarDisponibilidadeModalidades() {
     const turma = document.getElementById("turma").value;
+    const sexo = document.getElementById("sexo").value;
     const spans = document.querySelectorAll(".modalidade-vagas");
     const checkboxes = document.querySelectorAll(".chkModalidade");
 
@@ -855,13 +1083,27 @@ function atualizarDisponibilidadeModalidades() {
             span.textContent = mod + " (selecione turno e turma primeiro)";
             span.classList.remove("modalidade-lotado");
         } else {
-            const qtd = (countsPorTurmaModalidade[turma] && countsPorTurmaModalidade[turma][mod]) ? countsPorTurmaModalidade[turma][mod] : 0;
-            if (qtd >= LIMITE_POR_MODALIDADE_TURMA) {
-                span.textContent = mod + " (LOTADO - " + qtd + "/" + LIMITE_POR_MODALIDADE_TURMA + ")";
-                span.classList.add("modalidade-lotado");
+            if (mod === "QUEIMADA MISTA") {
+                const tot = (countsPorTurmaModalidade[turma] && countsPorTurmaModalidade[turma][mod]) ? countsPorTurmaModalidade[turma][mod] : 0;
+                const gen = countsQueimadaGenero[turma] || { Masculino: 0, Feminino: 0 };
+                const qtdM = gen.Masculino || 0;
+                const qtdF = gen.Feminino || 0;
+                span.textContent = mod + " (" + tot + "/10 - Meninas: " + qtdF + "/5, Meninos: " + qtdM + "/5)";
+                if (tot >= LIMITE_QUEIMADA_TOTAL) {
+                    span.classList.add("modalidade-lotado");
+                } else {
+                    span.classList.remove("modalidade-lotado");
+                }
             } else {
-                span.textContent = mod + " (" + qtd + "/" + LIMITE_POR_MODALIDADE_TURMA + " vagas ocupadas)";
-                span.classList.remove("modalidade-lotado");
+                const limite = LIMITE_MODALIDADE_TURMA[mod] || 8;
+                const qtd = (countsPorTurmaModalidade[turma] && countsPorTurmaModalidade[turma][mod]) ? countsPorTurmaModalidade[turma][mod] : 0;
+                if (qtd >= limite) {
+                    span.textContent = mod + " (LOTADO - " + qtd + "/" + limite + ")";
+                    span.classList.add("modalidade-lotado");
+                } else {
+                    span.textContent = mod + " (" + qtd + "/" + limite + " vagas ocupadas)";
+                    span.classList.remove("modalidade-lotado");
+                }
             }
         }
     }
@@ -872,9 +1114,33 @@ function atualizarDisponibilidadeModalidades() {
         if (!turma) {
             chk.disabled = true;
             chk.checked = false;
+            continue;
+        }
+        if (mod === "QUEIMADA MISTA") {
+            const tot = (countsPorTurmaModalidade[turma] && countsPorTurmaModalidade[turma][mod]) ? countsPorTurmaModalidade[turma][mod] : 0;
+            const gen = countsQueimadaGenero[turma] || { Masculino: 0, Feminino: 0 };
+            const qtdM = gen.Masculino || 0;
+            const qtdF = gen.Feminino || 0;
+
+            if (!sexo) {
+                chk.disabled = true;
+                chk.checked = false;
+            } else if (tot >= LIMITE_QUEIMADA_TOTAL) {
+                chk.disabled = true;
+                chk.checked = false;
+            } else if (sexo === "Masculino" && qtdM >= LIMITE_QUEIMADA_POR_SEXO) {
+                chk.disabled = true;
+                chk.checked = false;
+            } else if (sexo === "Feminino" && qtdF >= LIMITE_QUEIMADA_POR_SEXO) {
+                chk.disabled = true;
+                chk.checked = false;
+            } else {
+                chk.disabled = false;
+            }
         } else {
+            const limite = LIMITE_MODALIDADE_TURMA[mod] || 8;
             const qtd = (countsPorTurmaModalidade[turma] && countsPorTurmaModalidade[turma][mod]) ? countsPorTurmaModalidade[turma][mod] : 0;
-            if (qtd >= LIMITE_POR_MODALIDADE_TURMA) {
+            if (qtd >= limite) {
                 chk.disabled = true;
                 chk.checked = false;
             } else {
@@ -939,7 +1205,7 @@ function renderizarTabelaAdmin() {
     if (todasInscricoes.length === 0) {
         const tr = document.createElement("tr");
         const td = document.createElement("td");
-        td.colSpan = 7;
+        td.colSpan = 9;
         td.textContent = "Ainda não há inscrições.";
         tr.appendChild(td);
         corpo.appendChild(tr);
@@ -951,6 +1217,8 @@ function renderizarTabelaAdmin() {
         const tr = document.createElement("tr");
 
         const tdNome = document.createElement("td");
+        const tdEmail = document.createElement("td");
+        const tdSexo = document.createElement("td");
         const tdTurma = document.createElement("td");
         const tdTurno = document.createElement("td");
         const tdCamisa = document.createElement("td");
@@ -959,6 +1227,8 @@ function renderizarTabelaAdmin() {
         const tdData = document.createElement("td");
 
         tdNome.textContent = ins.nome || "";
+        tdEmail.textContent = ins.email || "";
+        tdSexo.textContent = ins.sexo || "";
         tdTurma.textContent = ins.turma || "";
         tdTurno.textContent = ins.turno || "";
         tdCamisa.textContent = ins.camisaNumero || "";
@@ -975,6 +1245,8 @@ function renderizarTabelaAdmin() {
         }
 
         tr.appendChild(tdNome);
+        tr.appendChild(tdEmail);
+        tr.appendChild(tdSexo);
         tr.appendChild(tdTurma);
         tr.appendChild(tdTurno);
         tr.appendChild(tdCamisa);
@@ -985,7 +1257,26 @@ function renderizarTabelaAdmin() {
     }
 }
 
-/* ============= 11) EXCEÇÕES DE NOME ============= */
+/* ============= 11) BUSCA ADMIN ============= */
+
+function filtrarTabelaAdminPorNome() {
+    const termo = (document.getElementById("adminSearch").value || "").toLowerCase().trim();
+    const linhas = document.querySelectorAll("#tabelaAdmin tbody tr");
+    if (!linhas.length) return;
+
+    linhas.forEach(function(tr) {
+        const tdNome = tr.children[0];
+        if (!tdNome) return;
+        const nome = (tdNome.textContent || "").toLowerCase();
+        if (!termo || nome.includes(termo)) {
+            tr.style.display = "";
+        } else {
+            tr.style.display = "none";
+        }
+    });
+}
+
+/* ============= 12) EXCEÇÕES DE NOME ============= */
 
 async function handleAdicionarExcecao() {
     const input = document.getElementById("nomeExcecao");
@@ -1026,7 +1317,7 @@ function renderizarListaExcecoes() {
     ul.innerHTML = "";
     if (nomesExcecao.length === 0) {
         const li = document.createElement("li");
-        li.textContent = "Nenhum nome com menos de 4 nomes autorizado ainda.";
+        li.textContent = "Nenhum nome com 2 palavras autorizado ainda.";
         ul.appendChild(li);
         return;
     }
@@ -1038,7 +1329,7 @@ function renderizarListaExcecoes() {
     }
 }
 
-/* ============= 12) CANCELAR INSCRIÇÃO ============= */
+/* ============= 13) CANCELAR INSCRIÇÃO ============= */
 
 function atualizarSelectCancelar() {
     const sel = document.getElementById("selectCancelar");
@@ -1098,10 +1389,68 @@ async function handleCancelarInscricao() {
     }
 }
 
-/* ============= 13) TROCA DE TELAS (ALUNO / INSCRITOS / ADMIN) ============= */
+/* ============= 14) RELATÓRIO POR MODALIDADE / TURMA ============= */
+
+function renderizarResumoModalidades() {
+    if (!isAdmin) return;
+    const corpo = document.querySelector("#tabelaResumo tbody");
+    if (!corpo) return;
+    corpo.innerHTML = "";
+
+    const turmas = Object.keys(countsPorTurmaModalidade);
+    turmas.sort();
+
+    for (let t = 0; t < turmas.length; t++) {
+        const turma = turmas[t];
+        const modsObj = countsPorTurmaModalidade[turma] || {};
+        const mods = Object.keys(modsObj);
+        mods.sort();
+
+        for (let m = 0; m < mods.length; m++) {
+            const mod = mods[m];
+            const total = modsObj[mod] || 0;
+            const tr = document.createElement("tr");
+
+            const tdMod = document.createElement("td");
+            const tdTurma = document.createElement("td");
+            const tdTotal = document.createElement("td");
+            const tdDetalhe = document.createElement("td");
+
+            tdMod.textContent = mod;
+            tdTurma.textContent = turma;
+            tdTotal.textContent = total;
+
+            if (mod === "QUEIMADA MISTA") {
+                const gen = countsQueimadaGenero[turma] || { Masculino: 0, Feminino: 0 };
+                const qtdM = gen.Masculino || 0;
+                const qtdF = gen.Feminino || 0;
+                tdDetalhe.textContent = "Meninas: " + qtdF + "/5 | Meninos: " + qtdM + "/5";
+            } else {
+                const limite = LIMITE_MODALIDADE_TURMA[mod] || 8;
+                tdDetalhe.textContent = "Limite por turma: " + limite;
+            }
+
+            tr.appendChild(tdMod);
+            tr.appendChild(tdTurma);
+            tr.appendChild(tdTotal);
+            tr.appendChild(tdDetalhe);
+            corpo.appendChild(tr);
+        }
+    }
+
+    if (!turmas.length) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 4;
+        td.textContent = "Ainda não há inscritos para gerar relatório.";
+        tr.appendChild(td);
+        corpo.appendChild(tr);
+    }
+}
+
+/* ============= 15) TROCA DE TELAS (ALUNO / INSCRITOS / ADMIN) ============= */
 
 function alternarPainelInscritos() {
-    // se admin estiver aberto, fecha primeiro
     if (adminAberto) {
         fecharAdmin();
     }
@@ -1136,6 +1485,7 @@ function abrirAdmin() {
     secInscritos.style.display = "none";
     admin.style.display = "block";
     renderizarTabelaAdmin();
+    renderizarResumoModalidades();
     admin.scrollIntoView({ behavior: "smooth" });
 }
 
