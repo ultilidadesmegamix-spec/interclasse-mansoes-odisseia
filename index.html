@@ -9,7 +9,7 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
 
-    <!-- Firebase (compat) -->
+    <!-- Firebase compat (NÃO MEXER) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -437,13 +437,7 @@
 'use strict';
 
 /* ============= 1) FIREBASE ============= */
-// TROQUE PELOS DADOS REAIS DO SEU PROJETO FIREBASE
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
+// Usando SEU firebaseConfig correto (compat JS, sem "import")
 const firebaseConfig = {
   apiKey: "AIzaSyAxB-FrZNQ7DE-e_YJOvNkkwAaCToH9nd8",
   authDomain: "inscricoes-movimenta.firebaseapp.com",
@@ -452,9 +446,6 @@ const firebaseConfig = {
   messagingSenderId: "383820865072",
   appId: "1:383820865072:web:c8602b5c2cbcd5884057f5"
 };
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
@@ -500,7 +491,7 @@ const TURMAS_NOTURNO = [
 
 const LIMITE_POR_MODALIDADE_TURMA = 8;
 const LIMITE_MODALIDADES_POR_ALUNO = 2;
-const ADMIN_PASSWORD = "cemo52090949";
+const ADMIN_PASSWORD = "movimenta2025";
 
 /* ============= 3) ESTADO ============= */
 
@@ -773,6 +764,7 @@ async function handleSubmitInscricao(event) {
     const qtdPartes = partesNome.length;
     const nomeNormalizado = normalizarNome(nome);
 
+    // Nome com menos de 4 palavras só entra se for exceção
     if (qtdPartes < 4) {
         let autorizado = false;
         for (let i = 0; i < nomesExcecao.length; i++) {
@@ -823,6 +815,7 @@ async function handleSubmitInscricao(event) {
     }
 
     try {
+        // SALVA NO FIRESTORE
         await db.collection("inscricoes").add({
             nome: nome,
             nomeNormalizado: nomeNormalizado,
@@ -834,9 +827,10 @@ async function handleSubmitInscricao(event) {
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
 
+        // Se chegou aqui, salvou → pode limpar o form
         mostrarMensagemForm("Inscrição realizada com sucesso! ✅", true);
 
-        // 🔁 Zera o formulário para o próximo aluno
+        // Zera o formulário para o próximo aluno
         document.getElementById("formInscricao").reset();
         document.getElementById("turma").innerHTML = '<option value="">Selecione o turno primeiro...</option>';
         document.getElementById("turma").disabled = true;
