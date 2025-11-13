@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8" />
-    <title>Inscrições Interclasse - Colégio Mansões Odisseia</title>
+    <title>Inscrições Movimenta Odisseia</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <!-- Firebase (compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -228,26 +228,9 @@
             margin-top: 4px;
         }
 
-        #secInscritos {
-            display: none;
-        }
-
-        /* Overlay da área administrativa */
-        #adminOverlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.45);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 10px;
-            z-index: 9999;
-        }
+        /* Área admin */
         #adminSection {
-            max-width: 1000px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
+            display: none;
         }
         .admin-tag {
             font-size: 0.76rem;
@@ -267,18 +250,18 @@
             font-size: 0.95rem;
             color: var(--azul);
         }
-        .admin-header-actions {
-            display:flex;
-            justify-content: flex-end;
-            margin-bottom:8px;
+
+        /* Painel de inscritos começa escondido */
+        #secInscritos {
+            display: none;
         }
     </style>
 </head>
 <body>
 <header>
     <div>
-        <h1>Inscrições Interclasse</h1>
-        <span class="subtitulo">Colégio Estadual Mansões Odisseia · Modalidades esportivas</span>
+        <h1>Inscrições Movimenta Odisseia</h1>
+        <span class="subtitulo">Inscrições para o Movimenta Odisseia</span>
     </div>
     <div class="header-right">
         <button id="btnToggleInscritos" class="btn btn-primaria">
@@ -307,7 +290,7 @@
                 <div>
                     <label for="turno">Turno</label>
                     <select id="turno" required>
-                        <option value="">Selecione...</option>
+                        <option value="">Selecione o turno...</option>
                         <option value="Matutino">Matutino</option>
                         <option value="Vespertino">Vespertino</option>
                         <option value="Noturno">Noturno</option>
@@ -315,22 +298,22 @@
                 </div>
             </div>
 
+            <div style="margin-top:10px;">
+                <label for="turma">Turma</label>
+                <select id="turma" required>
+                    <option value="">Selecione o turno primeiro...</option>
+                </select>
+            </div>
+
             <div class="grid-2" style="margin-top:10px;">
-                <div>
-                    <label for="turma">Turma</label>
-                    <select id="turma" required>
-                        <option value="">Selecione o turno primeiro...</option>
-                    </select>
-                </div>
                 <div>
                     <label for="camisaNumero">Número da camisa (opcional)</label>
                     <input type="text" id="camisaNumero" placeholder="Ex: 10, 07, 23..." />
                 </div>
-            </div>
-
-            <div style="margin-top:10px;">
-                <label for="observacoes">Observações (posição em quadra, restrições, etc.)</label>
-                <textarea id="observacoes" placeholder="Ex: Goleiro no futsal, prefere queimada mista..."></textarea>
+                <div>
+                    <label for="observacoes">Observações (posição em quadra, restrições, etc.)</label>
+                    <textarea id="observacoes" placeholder="Ex: Goleiro no futsal, prefere queimada mista..."></textarea>
+                </div>
             </div>
 
             <div style="margin-top:14px;">
@@ -387,16 +370,14 @@
             </tbody>
         </table>
     </section>
-</main>
 
-<!-- OVERLAY DA ÁREA ADMINISTRATIVA (SÓ APARECE COM SENHA) -->
-<div id="adminOverlay">
+    <!-- ÁREA ADMINISTRATIVA (SOMENTE COM SENHA) -->
     <section class="card" id="adminSection">
-        <div class="admin-header-actions">
-            <button id="btnFecharAdmin" class="btn btn-admin">✖ Fechar área administrativa</button>
-        </div>
         <h2>Área Administrativa</h2>
-        <div class="admin-tag">Apenas para coordenação / organização da Interclasse</div>
+        <div class="admin-tag">Apenas para coordenação / organização do Movimenta Odisseia</div>
+        <button id="btnFecharAdmin" class="btn btn-primaria" style="margin-top:8px; margin-bottom:6px;">
+            ⬅ Fechar área administrativa
+        </button>
         <small>Aqui aparecem todas as inscrições com detalhes, além de um controle para autorizar nomes com menos de 4 nomes e cancelar inscrições.</small>
 
         <!-- BLOCO DE EXCEÇÕES DE NOME -->
@@ -445,14 +426,13 @@
             </table>
         </div>
     </section>
-</div>
+</main>
 
 <script>
-/* ============================
-   1) CONFIGURAÇÃO DO FIREBASE
-   ============================ */
+'use strict';
 
-// TROQUE PELOS SEUS DADOS REAIS DO FIREBASE
+/* ============= 1) FIREBASE ============= */
+// TROQUE PELOS DADOS REAIS DO SEU PROJETO FIREBASE
 const firebaseConfig = {
     apiKey: "SUA_API_KEY_AQUI",
     authDomain: "SEU_PROJETO.firebaseapp.com",
@@ -465,9 +445,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-/* ============================
-   2) DADOS FIXOS E MAPEAMENTOS
-   ============================ */
+/* ============= 2) DADOS FIXOS ============= */
 
 const MODALIDADES = [
     "FUTSAL",
@@ -478,7 +456,6 @@ const MODALIDADES = [
     "XADREZ"
 ];
 
-// todas as turmas possíveis
 const TURMAS = [
     "6ºA","6ºB","6ºC","6ºD","6ºE","6ºF","6ºG",
     "7ºA","7ºB","7ºC","7ºD","7ºE","7ºF",
@@ -489,41 +466,38 @@ const TURMAS = [
     "3ºA","3ºB","3ºC"
 ];
 
-// mapeamento turno → turmas
-const MAP_TURMAS_POR_TURNO = {
-    "Matutino": [
-        "7ºA","7ºB","7ºC","7ºD","7ºE","7ºF",
-        "9ºA","9ºB","9ºC","9ºD","9ºE",
-        "8ºF" // oitavo F no matutino
-    ],
-    "Vespertino": [
-        "6ºA","6ºB","6ºC","6ºD","6ºE","6ºF","6ºG",
-        "8ºA","8ºB","8ºC","8ºD","8ºE" // 8ºF é de manhã
-    ],
-    "Noturno": [
-        "1ºA","1ºB","1ºC","1ºD","1ºE","1ºF",
-        "2ºA","2ºB","2ºC",
-        "3ºA","3ºB","3ºC"
-    ]
-};
+// Turnos com turmas específicas
+const TURMAS_MATUTINO = [
+    "7ºA","7ºB","7ºC","7ºD","7ºE","7ºF",
+    "8ºF",
+    "9ºA","9ºB","9ºC","9ºD","9ºE"
+];
+
+const TURMAS_VESPERTINO = [
+    "6ºA","6ºB","6ºC","6ºD","6ºE","6ºF","6ºG",
+    "8ºA","8ºB","8ºC","8ºD","8ºE"
+];
+
+const TURMAS_NOTURNO = [
+    "1ºA","1ºB","1ºC","1ºD","1ºE","1ºF",
+    "2ºA","2ºB","2ºC",
+    "3ºA","3ºB","3ºC"
+];
 
 const LIMITE_POR_MODALIDADE_TURMA = 8;
 const LIMITE_MODALIDADES_POR_ALUNO = 2;
 const ADMIN_PASSWORD = "movimenta2025";
 
-/* ============================
-   3) ESTADO GLOBAL
-   ============================ */
+/* ============= 3) ESTADO ============= */
 
 let countsPorTurmaModalidade = {};
 let todasInscricoes = [];
 let isAdmin = false;
+let adminAberto = false;
 let mostrandoInscritos = false;
 let nomesExcecao = [];
 
-/* ============================
-   4) FUNÇÕES AUXILIARES
-   ============================ */
+/* ============= 4) AUXILIARES ============= */
 
 function normalizarNome(str) {
     if (!str) return "";
@@ -545,18 +519,31 @@ function mostrarMensagemForm(texto, sucesso) {
     msgBox.appendChild(div);
 }
 
-/* ============================
-   5) INICIALIZAÇÃO (PC + CELULAR)
-   ============================ */
+function getTurmasPorTurno(turno) {
+    if (turno === "Matutino") return TURMAS_MATUTINO;
+    if (turno === "Vespertino") return TURMAS_VESPERTINO;
+    if (turno === "Noturno") return TURMAS_NOTURNO;
+    return [];
+}
 
-document.addEventListener("DOMContentLoaded", function() {
+/* ============= 5) INICIALIZAÇÃO ============= */
+
+function initInterclasse() {
     const selectTurma = document.getElementById("turma");
     const selectTurno = document.getElementById("turno");
     const filtroTurma = document.getElementById("filtroTurma");
     const filtroModalidade = document.getElementById("filtroModalidade");
     const modalidadesContainer = document.getElementById("modalidadesContainer");
 
-    // Preenche todas as turmas no filtro público (alunos podem ver todos)
+    if (!selectTurma || !selectTurno || !filtroTurma || !filtroModalidade || !modalidadesContainer) {
+        console.error("Erro ao carregar elementos principais. Verifique o HTML.");
+        return;
+    }
+
+    // Turma desabilitada até escolher turno
+    selectTurma.disabled = true;
+
+    // Filtro de turmas (todas)
     TURMAS.forEach(function(t) {
         const opt = document.createElement("option");
         opt.value = t;
@@ -564,7 +551,7 @@ document.addEventListener("DOMContentLoaded", function() {
         filtroTurma.appendChild(opt);
     });
 
-    // Preenche modalidades no filtro público
+    // Filtro de modalidades
     MODALIDADES.forEach(function(m) {
         const opt = document.createElement("option");
         opt.value = m;
@@ -572,7 +559,7 @@ document.addEventListener("DOMContentLoaded", function() {
         filtroModalidade.appendChild(opt);
     });
 
-    // Cria checkboxes de modalidades
+    // Checkboxes de modalidades
     MODALIDADES.forEach(function(mod) {
         const div = document.createElement("div");
         div.className = "modalidade-item";
@@ -590,7 +577,7 @@ document.addEventListener("DOMContentLoaded", function() {
         const vagas = document.createElement("span");
         vagas.className = "modalidade-vagas";
         vagas.dataset.modLabel = mod;
-        vagas.textContent = "Selecione o turno e a turma para ver as vagas.";
+        vagas.textContent = "Selecione turno e turma para ver as vagas.";
 
         infoDiv.appendChild(lbl);
         infoDiv.appendChild(vagas);
@@ -611,13 +598,31 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 
-    // Turno mudou → recarrega lista de turmas disponíveis
+    // Turno → carrega turmas
     selectTurno.addEventListener("change", function() {
-        atualizarTurmasDoForm();
+        const turno = selectTurno.value;
+        const turmasTurno = getTurmasPorTurno(turno);
+        selectTurma.innerHTML = "";
+        const optDefault = document.createElement("option");
+        optDefault.value = "";
+        optDefault.textContent = turno ? "Selecione a turma..." : "Selecione o turno primeiro...";
+        selectTurma.appendChild(optDefault);
+
+        if (!turno) {
+            selectTurma.disabled = true;
+        } else {
+            turmasTurno.forEach(function(t) {
+                const opt = document.createElement("option");
+                opt.value = t;
+                opt.textContent = t;
+                selectTurma.appendChild(opt);
+            });
+            selectTurma.disabled = false;
+        }
         atualizarDisponibilidadeModalidades();
     });
 
-    // Turma mudou → atualiza vagas das modalidades
+    // Turma muda → atualiza vagas
     selectTurma.addEventListener("change", atualizarDisponibilidadeModalidades);
 
     // Filtros da tabela pública
@@ -627,72 +632,42 @@ document.addEventListener("DOMContentLoaded", function() {
     // Botão "Ver inscritos"
     document.getElementById("btnToggleInscritos").addEventListener("click", alternarPainelInscritos);
 
-    // Botão Área administrativa
+    // Botão área admin
     document.getElementById("btnAdminArea").addEventListener("click", function() {
         if (!isAdmin) {
             const senha = prompt("Digite a senha da área administrativa:");
             if (senha === ADMIN_PASSWORD) {
                 isAdmin = true;
-                abrirAdminOverlay();
-                renderizarTabelaAdmin();
+                abrirAdmin();
             } else if (senha !== null) {
                 alert("Senha incorreta.");
             }
         } else {
-            abrirAdminOverlay();
-            renderizarTabelaAdmin();
+            abrirAdmin();
         }
     });
 
     // Botão fechar admin
-    document.getElementById("btnFecharAdmin").addEventListener("click", fecharAdminOverlay);
+    document.getElementById("btnFecharAdmin").addEventListener("click", fecharAdmin);
 
     // Envio do formulário
     document.getElementById("formInscricao").addEventListener("submit", handleSubmitInscricao);
 
-    // Exceção de nome
+    // Nome exceção
     document.getElementById("btnAdicionarExcecao").addEventListener("click", handleAdicionarExcecao);
 
     // Cancelar inscrição
     document.getElementById("btnCancelarInscricao").addEventListener("click", handleCancelarInscricao);
 
-    // Inicia listeners do Firestore
+    // Listeners em tempo real
     iniciarListenerInscricoes();
     iniciarListenerExcecoes();
-});
-
-/* ============================
-   6) CONTROLE DE TURMAS POR TURNO
-   ============================ */
-
-function atualizarTurmasDoForm() {
-    const turno = document.getElementById("turno").value;
-    const selTurma = document.getElementById("turma");
-    selTurma.innerHTML = "";
-
-    const optPadrao = document.createElement("option");
-    optPadrao.value = "";
-    if (!turno) {
-        optPadrao.textContent = "Selecione o turno primeiro...";
-        selTurma.appendChild(optPadrao);
-        return;
-    }
-
-    optPadrao.textContent = "Selecione a turma...";
-    selTurma.appendChild(optPadrao);
-
-    const listaTurmas = MAP_TURMAS_POR_TURNO[turno] || [];
-    listaTurmas.forEach(function(t) {
-        const opt = document.createElement("option");
-        opt.value = t;
-        opt.textContent = t;
-        selTurma.appendChild(opt);
-    });
 }
 
-/* ============================
-   7) LISTENERS FIRESTORE
-   ============================ */
+// rodar quando a página terminar de carregar (PC e celular)
+window.addEventListener("load", initInterclasse);
+
+/* ============= 6) LISTENERS FIRESTORE ============= */
 
 function iniciarListenerInscricoes() {
     db.collection("inscricoes")
@@ -708,8 +683,14 @@ function iniciarListenerInscricoes() {
 
                 const registro = {
                     id: doc.id,
-                    ...data,
-                    nomeNormalizado
+                    nome: nome,
+                    nomeNormalizado: nomeNormalizado,
+                    turma: data.turma,
+                    turno: data.turno,
+                    camisaNumero: data.camisaNumero,
+                    modalidades: data.modalidades || [],
+                    observacoes: data.observacoes,
+                    timestamp: data.timestamp
                 };
                 todasInscricoes.push(registro);
 
@@ -720,4 +701,459 @@ function iniciarListenerInscricoes() {
                 }
                 modalidades.forEach(function(m) {
                     if (!countsPorTurmaModalidade[turma][m]) {
-                        countsPorTurma
+                        countsPorTurmaModalidade[turma][m] = 0;
+                    }
+                    countsPorTurmaModalidade[turma][m]++;
+                });
+            });
+
+            atualizarDisponibilidadeModalidades();
+            renderizarTabelaPublica();
+            renderizarTabelaAdmin();
+            atualizarSelectCancelar();
+        }, function(error) {
+            console.error("Erro ao ouvir inscrições:", error);
+        });
+}
+
+function iniciarListenerExcecoes() {
+    db.collection("nomesExcecao")
+        .orderBy("nomeOriginal")
+        .onSnapshot(function(snapshot) {
+            nomesExcecao = [];
+            snapshot.forEach(function(doc) {
+                const data = doc.data();
+                nomesExcecao.push({
+                    id: doc.id,
+                    nomeOriginal: data.nomeOriginal,
+                    nomeNormalizado: data.nomeNormalizado
+                });
+            });
+            renderizarListaExcecoes();
+        }, function(error) {
+            console.error("Erro ao ouvir exceções:", error);
+        });
+}
+
+/* ============= 7) FORMULÁRIO DE INSCRIÇÃO ============= */
+
+async function handleSubmitInscricao(event) {
+    event.preventDefault();
+
+    const nome = document.getElementById("nome").value.trim();
+    const turma = document.getElementById("turma").value;
+    const turno = document.getElementById("turno").value;
+    const camisaNumero = document.getElementById("camisaNumero").value.trim();
+    const observacoes = document.getElementById("observacoes").value.trim();
+    const selecionados = [];
+    const checks = document.querySelectorAll(".chkModalidade:checked");
+    for (let i = 0; i < checks.length; i++) {
+        selecionados.push(checks[i].value);
+    }
+
+    const partesNome = nome.split(/\s+/).filter(function(p) { return p; });
+    const qtdPartes = partesNome.length;
+    const nomeNormalizado = normalizarNome(nome);
+
+    if (qtdPartes < 4) {
+        let autorizado = false;
+        for (let i = 0; i < nomesExcecao.length; i++) {
+            if (nomesExcecao[i].nomeNormalizado === nomeNormalizado) {
+                autorizado = true;
+                break;
+            }
+        }
+        if (!autorizado) {
+            mostrarMensagemForm(
+                "Seu nome tem menos de três nomes. Envie uma mensagem no chat do Instagram do colégio para análise da coordenação.",
+                false
+            );
+            return;
+        }
+    }
+
+    if (!nome || !turma || !turno) {
+        mostrarMensagemForm("Preencha nome, turno e turma.", false);
+        return;
+    }
+    if (selecionados.length === 0) {
+        mostrarMensagemForm("Escolha pelo menos 1 modalidade.", false);
+        return;
+    }
+    if (selecionados.length > LIMITE_MODALIDADES_POR_ALUNO) {
+        mostrarMensagemForm("Você só pode escolher até " + LIMITE_MODALIDADES_POR_ALUNO + " modalidades.", false);
+        return;
+    }
+
+    // Verificar vagas da turma
+    for (let i = 0; i < selecionados.length; i++) {
+        const mod = selecionados[i];
+        const qtdAtual = (countsPorTurmaModalidade[turma] && countsPorTurmaModalidade[turma][mod]) ? countsPorTurmaModalidade[turma][mod] : 0;
+        if (qtdAtual >= LIMITE_POR_MODALIDADE_TURMA) {
+            mostrarMensagemForm('A modalidade "' + mod + '" está LOTADA para a turma ' + turma + '. Escolha outra modalidade.', false);
+            return;
+        }
+    }
+
+    // Evitar dupla inscrição do mesmo aluno na mesma turma
+    for (let i = 0; i < todasInscricoes.length; i++) {
+        const ins = todasInscricoes[i];
+        if (ins.nomeNormalizado === nomeNormalizado && ins.turma === turma) {
+            mostrarMensagemForm("Já existe uma inscrição para este nome nesta turma. Procure a coordenação se precisar alterar.", false);
+            return;
+        }
+    }
+
+    try {
+        await db.collection("inscricoes").add({
+            nome: nome,
+            nomeNormalizado: nomeNormalizado,
+            turma: turma,
+            turno: turno,
+            camisaNumero: camisaNumero || null,
+            modalidades: selecionados,
+            observacoes: observacoes || null,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        mostrarMensagemForm("Inscrição realizada com sucesso! ✅", true);
+        document.getElementById("formInscricao").reset();
+        document.getElementById("turma").innerHTML = '<option value="">Selecione o turno primeiro...</option>';
+        document.getElementById("turma").disabled = true;
+        atualizarDisponibilidadeModalidades();
+    } catch (error) {
+        console.error("Erro ao salvar inscrição:", error);
+        mostrarMensagemForm("Ocorreu um erro ao salvar sua inscrição. Tente novamente.", false);
+    }
+}
+
+/* ============= 8) DISPONIBILIDADE DAS MODALIDADES ============= */
+
+function atualizarDisponibilidadeModalidades() {
+    const turma = document.getElementById("turma").value;
+    const spans = document.querySelectorAll("[data-modLabel], [data-modlabel]");
+    const checkboxes = document.querySelectorAll(".chkModalidade");
+
+    const spansCorrigidos = [];
+    for (let i = 0; i < spans.length; i++) {
+        spansCorrigidos.push(spans[i]);
+    }
+    const spansVagas = document.querySelectorAll(".modalidade-vagas");
+    for (let i = 0; i < spansVagas.length; i++) {
+        const span = spansVagas[i];
+        const mod = span.getAttribute("data-modLabel") || span.getAttribute("data-modlabel") || span.textContent.split(" (")[0];
+        span.setAttribute("data-modLabel", mod);
+    }
+
+    const spans2 = document.querySelectorAll("[data-modLabel]");
+    for (let i = 0; i < spans2.length; i++) {
+        const span = spans2[i];
+        const mod = span.getAttribute("data-modLabel");
+        if (!turma) {
+            span.textContent = mod + " (selecione turno e turma primeiro)";
+            span.classList.remove("modalidade-lotado");
+        } else {
+            const qtd = (countsPorTurmaModalidade[turma] && countsPorTurmaModalidade[turma][mod]) ? countsPorTurmaModalidade[turma][mod] : 0;
+            if (qtd >= LIMITE_POR_MODALIDADE_TURMA) {
+                span.textContent = mod + " (LOTADO - " + qtd + "/" + LIMITE_POR_MODALIDADE_TURMA + ")";
+                span.classList.add("modalidade-lotado");
+            } else {
+                span.textContent = mod + " (" + qtd + "/" + LIMITE_POR_MODALIDADE_TURMA + " vagas ocupadas)";
+                span.classList.remove("modalidade-lotado");
+            }
+        }
+    }
+
+    for (let i = 0; i < checkboxes.length; i++) {
+        const chk = checkboxes[i];
+        const mod = chk.value;
+        if (!turma) {
+            chk.disabled = true;
+            chk.checked = false;
+        } else {
+            const qtd = (countsPorTurmaModalidade[turma] && countsPorTurmaModalidade[turma][mod]) ? countsPorTurmaModalidade[turma][mod] : 0;
+            if (qtd >= LIMITE_POR_MODALIDADE_TURMA) {
+                chk.disabled = true;
+                chk.checked = false;
+            } else {
+                chk.disabled = false;
+            }
+        }
+    }
+}
+
+/* ============= 9) TABELA PÚBLICA ============= */
+
+function renderizarTabelaPublica() {
+    const corpo = document.querySelector("#tabelaPublica tbody");
+    if (!corpo) return;
+    corpo.innerHTML = "";
+
+    const filtroMod = document.getElementById("filtroModalidade").value;
+    const filtroTurma = document.getElementById("filtroTurma").value;
+
+    const listaFiltrada = [];
+    for (let i = 0; i < todasInscricoes.length; i++) {
+        const ins = todasInscricoes[i];
+        let ok = true;
+        if (filtroTurma !== "TODAS" && ins.turma !== filtroTurma) ok = false;
+        if (filtroMod !== "TODAS" && ins.modalidades && ins.modalidades.indexOf(filtroMod) === -1) ok = false;
+        if (ok) listaFiltrada.push(ins);
+    }
+
+    if (listaFiltrada.length === 0) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 2;
+        td.textContent = "Nenhum inscrito encontrado com esses filtros.";
+        tr.appendChild(td);
+        corpo.appendChild(tr);
+        return;
+    }
+
+    for (let i = 0; i < listaFiltrada.length; i++) {
+        const ins = listaFiltrada[i];
+        const tr = document.createElement("tr");
+        const tdNome = document.createElement("td");
+        const tdTurma = document.createElement("td");
+
+        tdNome.textContent = ins.nome;
+        tdTurma.textContent = ins.turma;
+
+        tr.appendChild(tdNome);
+        tr.appendChild(tdTurma);
+        corpo.appendChild(tr);
+    }
+}
+
+/* ============= 10) TABELA ADMIN ============= */
+
+function renderizarTabelaAdmin() {
+    if (!isAdmin) return;
+    const corpo = document.querySelector("#tabelaAdmin tbody");
+    if (!corpo) return;
+    corpo.innerHTML = "";
+
+    if (todasInscricoes.length === 0) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 7;
+        td.textContent = "Ainda não há inscrições.";
+        tr.appendChild(td);
+        corpo.appendChild(tr);
+        return;
+    }
+
+    for (let i = 0; i < todasInscricoes.length; i++) {
+        const ins = todasInscricoes[i];
+        const tr = document.createElement("tr");
+
+        const tdNome = document.createElement("td");
+        const tdTurma = document.createElement("td");
+        const tdTurno = document.createElement("td");
+        const tdCamisa = document.createElement("td");
+        const tdMods = document.createElement("td");
+        const tdObs = document.createElement("td");
+        const tdData = document.createElement("td");
+
+        tdNome.textContent = ins.nome || "";
+        tdTurma.textContent = ins.turma || "";
+        tdTurno.textContent = ins.turno || "";
+        tdCamisa.textContent = ins.camisaNumero || "";
+        tdMods.textContent = (ins.modalidades || []).join(", ");
+        tdObs.textContent = ins.observacoes || "";
+
+        if (ins.timestamp && ins.timestamp.toDate) {
+            const d = ins.timestamp.toDate();
+            const dataStr = d.toLocaleDateString("pt-BR");
+            const horaStr = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+            tdData.textContent = dataStr + " " + horaStr;
+        } else {
+            tdData.textContent = "-";
+        }
+
+        tr.appendChild(tdNome);
+        tr.appendChild(tdTurma);
+        tr.appendChild(tdTurno);
+        tr.appendChild(tdCamisa);
+        tr.appendChild(tdMods);
+        tr.appendChild(tdObs);
+        tr.appendChild(tdData);
+        corpo.appendChild(tr);
+    }
+}
+
+/* ============= 11) EXCEÇÕES DE NOME ============= */
+
+async function handleAdicionarExcecao() {
+    const input = document.getElementById("nomeExcecao");
+    const nomeOriginal = (input.value || "").trim();
+    if (!nomeOriginal) {
+        alert("Digite um nome para autorizar.");
+        return;
+    }
+    const nomeNorm = normalizarNome(nomeOriginal);
+    if (!nomeNorm) {
+        alert("Nome inválido.");
+        return;
+    }
+
+    for (let i = 0; i < nomesExcecao.length; i++) {
+        if (nomesExcecao[i].nomeNormalizado === nomeNorm) {
+            alert("Esse nome já está autorizado como exceção.");
+            return;
+        }
+    }
+
+    try {
+        await db.collection("nomesExcecao").add({
+            nomeOriginal: nomeOriginal,
+            nomeNormalizado: nomeNorm
+        });
+        input.value = "";
+        alert("Nome autorizado com sucesso.");
+    } catch (error) {
+        console.error("Erro ao salvar exceção de nome:", error);
+        alert("Erro ao salvar exceção. Tente novamente.");
+    }
+}
+
+function renderizarListaExcecoes() {
+    const ul = document.getElementById("listaExcecoes");
+    if (!ul) return;
+    ul.innerHTML = "";
+    if (nomesExcecao.length === 0) {
+        const li = document.createElement("li");
+        li.textContent = "Nenhum nome com menos de 4 nomes autorizado ainda.";
+        ul.appendChild(li);
+        return;
+    }
+    for (let i = 0; i < nomesExcecao.length; i++) {
+        const e = nomesExcecao[i];
+        const li = document.createElement("li");
+        li.textContent = e.nomeOriginal;
+        ul.appendChild(li);
+    }
+}
+
+/* ============= 12) CANCELAR INSCRIÇÃO ============= */
+
+function atualizarSelectCancelar() {
+    const sel = document.getElementById("selectCancelar");
+    if (!sel) return;
+    const valorAnterior = sel.value;
+    sel.innerHTML = "";
+    const optPadrao = document.createElement("option");
+    optPadrao.value = "";
+    optPadrao.textContent = "Selecione um inscrito...";
+    sel.appendChild(optPadrao);
+
+    for (let i = 0; i < todasInscricoes.length; i++) {
+        const ins = todasInscricoes[i];
+        const opt = document.createElement("option");
+        const mods = (ins.modalidades || []).join(", ");
+        opt.value = ins.id;
+        opt.textContent = ins.nome + " — " + ins.turma + (mods ? " — " + mods : "");
+        sel.appendChild(opt);
+    }
+
+    if (valorAnterior) {
+        sel.value = valorAnterior;
+    }
+}
+
+async function handleCancelarInscricao() {
+    if (!isAdmin) {
+        alert("Apenas a coordenação (área administrativa) pode cancelar inscrições.");
+        return;
+    }
+    const sel = document.getElementById("selectCancelar");
+    const id = sel.value;
+    if (!id) {
+        alert("Selecione um inscrito para cancelar.");
+        return;
+    }
+    let inscrito = null;
+    for (let i = 0; i < todasInscricoes.length; i++) {
+        if (todasInscricoes[i].id === id) {
+            inscrito = todasInscricoes[i];
+            break;
+        }
+    }
+    if (!inscrito) {
+        alert("Inscrição não encontrada. Atualize a página.");
+        return;
+    }
+    const confirmacao = confirm('Tem certeza que deseja cancelar a inscrição de "' + inscrito.nome + '" da turma ' + inscrito.turma + '?');
+    if (!confirmacao) return;
+
+    try {
+        await db.collection("inscricoes").doc(id).delete();
+        alert("Inscrição cancelada com sucesso. As vagas foram liberadas.");
+    } catch (error) {
+        console.error("Erro ao cancelar inscrição:", error);
+        alert("Erro ao cancelar inscrição. Tente novamente.");
+    }
+}
+
+/* ============= 13) TROCA DE TELAS (ALUNO / INSCRITOS / ADMIN) ============= */
+
+function alternarPainelInscritos() {
+    // se admin estiver aberto, fecha primeiro
+    if (adminAberto) {
+        fecharAdmin();
+    }
+    const secForm = document.getElementById("secInscricao");
+    const secInscritos = document.getElementById("secInscritos");
+    const admin = document.getElementById("adminSection");
+    const btn = document.getElementById("btnToggleInscritos");
+
+    admin.style.display = "none";
+
+    mostrandoInscritos = !mostrandoInscritos;
+    if (mostrandoInscritos) {
+        secForm.style.display = "none";
+        secInscritos.style.display = "block";
+        btn.textContent = "⬅ Voltar para inscrição";
+        secInscritos.scrollIntoView({ behavior: "smooth" });
+    } else {
+        secForm.style.display = "block";
+        secInscritos.style.display = "none";
+        btn.textContent = "👀 Ver inscritos";
+        secForm.scrollIntoView({ behavior: "smooth" });
+    }
+}
+
+function abrirAdmin() {
+    const secForm = document.getElementById("secInscricao");
+    const secInscritos = document.getElementById("secInscritos");
+    const admin = document.getElementById("adminSection");
+
+    adminAberto = true;
+    secForm.style.display = "none";
+    secInscritos.style.display = "none";
+    admin.style.display = "block";
+    renderizarTabelaAdmin();
+    admin.scrollIntoView({ behavior: "smooth" });
+}
+
+function fecharAdmin() {
+    const secForm = document.getElementById("secInscricao");
+    const secInscritos = document.getElementById("secInscritos");
+    const admin = document.getElementById("adminSection");
+
+    adminAberto = false;
+    isAdmin = false; // precisa da senha de novo na próxima vez
+    admin.style.display = "none";
+
+    if (mostrandoInscritos) {
+        secInscritos.style.display = "block";
+        secForm.style.display = "none";
+    } else {
+        secForm.style.display = "block";
+        secInscritos.style.display = "none";
+    }
+}
+</script>
+</body>
+</html>
