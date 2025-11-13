@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <title>Inscrições Interclasse - Colégio Mansões Odisseia</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Firebase (compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --azul: #0056b3;
+            --azul-claro: #e3f1ff;
+            --cinza: #f5f5f5;
+            --borda: #d0d7e2;
+            --vermelho: #d9534f;
+            --verde: #28a745;
+            --texto: #222;
+        }
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+        body {
+            margin: 0;
+            background: #f0f4fb;
+            color: var(--texto);
+        }
+        header {
+            background: linear-gradient(90deg, var(--azul) 0%, #007bff 100%);
+            color: #fff;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 1.2rem;
+        }
+        header span.subtitulo {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        button,
+        select,
+        input,
+        textarea {
+            font-size: 0.95rem;
+        }
+        .btn {
+            border: none;
+            border-radius: 999px;
+            padding: 8px 16px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+            transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.1s ease;
+        }
+        .btn-primaria {
+            background: #ffffff;
+            color: var(--azul);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+        .btn-primaria:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .btn-admin {
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+        .btn-admin:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        main {
+            max-width: 1100px;
+            margin: 20px auto 30px;
+            padding: 0 12px 20px;
+        }
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid var(--borda);
+            padding: 18px 16px 20px;
+            margin-bottom: 14px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+        }
+        .card h2 {
+            margin: 0 0 10px;
+            font-size: 1.1rem;
+            color: var(--azul);
+        }
+        .card small {
+            color: #666;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+        label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: block;
+            margin-bottom: 3px;
+        }
+        input[type="text"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 8px 9px;
+            border-radius: 8px;
+            border: 1px solid var(--borda);
+            background: #fafbff;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        .modalidades-lista {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 8px;
+            margin-top: 6px;
+        }
+        .modalidade-item {
+            border-radius: 10px;
+            border: 1px solid var(--borda);
+            padding: 6px 8px;
+            background: var(--azul-claro);
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            font-size: 0.88rem;
+        }
+        .modalidade-item input {
+            margin-top: 3px;
+        }
+        .modalidade-label {
+            font-weight: 600;
+            display: block;
+        }
+        .modalidade-vagas {
+            font-size: 0.78rem;
+            color: #333;
+        }
+        .modalidade-lotado {
+            color: var(--vermelho);
+            font-weight: 600;
+        }
+        .alerta {
+            margin-top: 4px;
+            font-size: 0.8rem;
+            color: #555;
+        }
+        .alerta strong {
+            color: var(--vermelho);
+        }
+        .msg-erro {
+            background: #ffe5e5;
+            color: #b30000;
+            border-radius: 8px;
+            padding: 6px 10px;
+            margin-bottom: 8px;
+            font-size: 0.86rem;
+        }
+        .msg-sucesso {
+            background: #e5ffe9;
+            color: #0c7a2a;
+            border-radius: 8px;
+            padding: 6px 10px;
+            margin-bottom: 8px;
+            font-size: 0.86rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+            font-size: 0.86rem;
+        }
+        th, td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #e1e4eb;
+            text-align: left;
+        }
+        th {
+            background: #f2f5ff;
+            font-weight: 600;
+        }
+        tr:hover td {
+            background: #f9fbff;
+        }
+        .filtros {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 6px;
+        }
+        .filtros > div {
+            min-width: 160px;
+        }
+
+        .pill-info {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: var(--azul-claro);
+            font-size: 0.75rem;
+            margin-top: 4px;
+        }
+
+        /* Área admin */
+        #adminSection {
+            display: none;
+        }
+        .admin-tag {
+            font-size: 0.76rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #555;
+        }
+
+        /* Painel de inscritos só aparece quando clicar no botão */
+        #secInscritos {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div>
+        <h1>Inscrições Interclasse</h1>
+        <span class="subtitulo">Colégio Estadual Mansões Odisseia · Modalidades esportivas</span>
+    </div>
+    <div class="header-right">
+        <button id="btnToggleInscritos" class="btn btn-primaria">
+            👀 Ver inscritos
+        </button>
+        <button id="btnAdminArea" class="btn btn-admin">
+            🔐 Área Administrativa
+        </button>
+    </div>
+</header>
+
+<main>
+    <!-- FORMULÁRIO DE INSCRIÇÃO -->
+    <section class="card" id="secInscricao">
+        <h2>Formulário de inscrição</h2>
+        <small>Preencha seus dados e escolha até <strong>2 modalidades</strong>. As vagas são limitadas (8 por turma em cada modalidade).</small>
+
+        <div id="msgForm"></div>
+
+        <form id="formInscricao">
+            <div class="grid-2">
+                <div>
+                    <label for="nome">Nome completo</label>
+                    <input type="text" id="nome" placeholder="Digite seu nome completo (mínimo 4 nomes)" required />
+                </div>
+                <div>
+                    <label for="turma">Turma</label>
+                    <select id="turma" required>
+                        <option value="">Selecione...</option>
+                        <!-- turmas via JS -->
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid-2" style="margin-top:10px;">
+                <div>
+                    <label for="turno">Turno</label>
+                    <select id="turno" required>
+                        <option value="">Selecione...</option>
+                        <option value="Matutino">Matutino</option>
+                        <option value="Vespertino">Vespertino</option>
+                        <option value="Noturno">Noturno</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="camisaNumero">Número da camisa (opcional)</label>
+                    <input type="text" id="camisaNumero" placeholder="Ex: 10, 07, 23..." />
+                </div>
+            </div>
+
+            <div style="margin-top:10px;">
+                <label for="observacoes">Observações (posição em quadra, restrições, etc.)</label>
+                <textarea id="observacoes" placeholder="Ex: Goleiro no futsal, prefere queimada mista..."></textarea>
+            </div>
+
+            <div style="margin-top:14px;">
+                <label>Modalidades (máximo 2 por aluno)</label>
+                <p class="alerta">
+                    ✅ Você pode marcar até <strong>2 modalidades</strong>.<br>
+                    ⚠️ Se uma modalidade aparecer como <strong>LOTADA</strong> para a sua turma, escolha outra.
+                </p>
+                <div class="modalidades-lista" id="modalidadesContainer">
+                    <!-- preenchido via JS -->
+                </div>
+            </div>
+
+            <div style="margin-top:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                <span class="pill-info">As inscrições são atualizadas em tempo real. Depois clique em "Ver inscritos" para ver quem já está inscrito.</span>
+                <button type="submit" class="btn btn-primaria">
+                    ✅ Enviar inscrição
+                </button>
+            </div>
+        </form>
+    </section>
+
+    <!-- LISTA PÚBLICA DE INSCRITOS (VISUALIZAÇÃO ALUNO) -->
+    <section class="card" id="secInscritos">
+        <h2>Painel de inscritos (visualização dos alunos)</h2>
+        <small>Aqui você pode ver quem já está inscrito, por turma e modalidade. Só aparece <strong>nome completo</strong> e <strong>turma</strong>.</small>
+
+        <div class="filtros">
+            <div>
+                <label for="filtroModalidade">Filtrar por modalidade</label>
+                <select id="filtroModalidade">
+                    <option value="TODAS">Todas</option>
+                    <!-- modalidades via JS -->
+                </select>
+            </div>
+            <div>
+                <label for="filtroTurma">Filtrar por turma</label>
+                <select id="filtroTurma">
+                    <option value="TODAS">Todas</option>
+                    <!-- turmas via JS -->
+                </select>
+            </div>
+        </div>
+
+        <table id="tabelaPublica">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Turma</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- linhas via JS -->
+            </tbody>
+        </table>
+    </section>
+
+    <!-- ÁREA ADMINISTRATIVA -->
+    <section class="card" id="adminSection">
+        <h2>Área Administrativa</h2>
+        <div class="admin-tag">Apenas para coordenação / organização da Interclasse</div>
+        <small>Aqui aparecem todas as inscrições com detalhes, além de um controle para autorizar nomes com menos de 4 nomes.</small>
+
+        <!-- BLOCO DE EXCEÇÕES DE NOME -->
+        <div style="margin-top:12px; padding:10px; border-radius:8px; background:#f9fbff; border:1px dashed #c5cde0;">
+            <strong>Exceção para nome incompleto (menos de 4 nomes)</strong>
+            <p style="font-size:0.84rem; margin:4px 0 8px;">
+                Se algum aluno tiver nome com menos de 4 nomes e você quiser liberar a inscrição dele, digite o nome exatamente como ele será escrito no formulário e clique em <em>"Autorizar"</em>.
+            </p>
+            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                <input type="text" id="nomeExcecao" placeholder="Nome a ser autorizado (igual o aluno vai digitar)" style="flex:1; min-width:200px;" />
+                <button id="btnAdicionarExcecao" class="btn btn-primaria">Autorizar nome</button>
+            </div>
+            <ul id="listaExcecoes" style="margin-top:8px; padding-left:18px; font-size:0.85rem;"></ul>
+        </div>
+
+        <div style="margin-top:14px;">
+            <table id="tabelaAdmin">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Turma</th>
+                        <th>Turno</th>
+                        <th>Nº camisa</th>
+                        <th>Modalidades</th>
+                        <th>Observações</th>
+                        <th>Data/Hora</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- via JS -->
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<script>
+    // ============================
+    // 1) CONFIGURAÇÃO DO FIREBASE
+    // ============================
+
+    // Import the functions you need from the SDKs you need import { initializeApp } from "firebase/app"; // TODO: Add SDKs for Firebase products that you want to use // https://firebase.google.com/docs/web/setup#available-libraries // Your web app's Firebase configuration const firebaseConfig = { apiKey: "AIzaSyDlYOQYS7jz1MPtACchOicuQnFWrBaFTL0", authDomain: "interclasse-mansoes-odisseia.firebaseapp.com", projectId: "interclasse-mansoes-odisseia", storageBucket: "interclasse-mansoes-odisseia.firebasestorage.app", messagingSenderId: "24382499047", appId: "1:24382499047:web:41103e7a166730c0761a42" }; // Initialize Firebase const app = initializeApp(firebaseConfig);
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // ============================
+    // 2) DADOS FIXOS (MODALIDADES / TURMAS)
+    // ============================
+
+    const MODALIDADES = [
+        "FUTSAL",
+        "QUEIMADA MISTA",
+        "DOMINÓ",
+        "FUTMESA",
+        "TÊNIS DE MESA",
+        "XADREZ"
+    ];
+
+    const TURMAS = [
+        "6ºA","6ºB","6ºC","6ºD","6ºE","6ºF","6ºG",
+        "7ºA","7ºB","7ºC","7ºD","7ºE","7ºF",
+        "8ºA","8ºB","8ºC","8ºD","8ºE","8ºF",
+        "9ºA","9ºB","9ºC","9ºD","9ºE",
+        "1ºA","1ºB","1ºC","1ºD","1ºE","1ºF",
+        "2ºA","2ºB","2ºC",
+        "3ºA","3ºB","3ºC"
+    ];
+
+    const LIMITE_POR_MODALIDADE_TURMA = 8;
+    const LIMITE_MODALIDADES_POR_ALUNO = 2;
+
+    // Senha simples de admin (VOCÊ PODE ALTERAR AQUI)
+    const ADMIN_PASSWORD = "movimenta2025";
+
+    // ============================
+    // 3) ESTADO GLOBAL
+    // ============================
+
+    let countsPorTurmaModalidade = {};
+    let todasInscricoes = [];
+    let isAdmin = false;
+    let mostrandoInscritos = false;
+    let nomesExcecao = []; // {id, nomeOriginal, nomeNormalizado}
+
+    // ============================
+    // 4) FUNÇÕES AUXILIARES
+    // ============================
+
+    function normalizarNome(str) {
+        if (!str) return "";
+        return str
+            .trim()
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "") // tira acentos
+            .replace(/\s+/g, " ");
+    }
+
+    // ============================
+    // 5) INICIALIZAÇÃO DO DOM
+    // ============================
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const selectTurma = document.getElementById("turma");
+        const filtroTurma = document.getElementById("filtroTurma");
+        const filtroModalidade = document.getElementById("filtroModalidade");
+        const modalidadesContainer = document.getElementById("modalidadesContainer");
+
+        // Preenche turmas nos selects
+        TURMAS.forEach(t => {
+            const opt1 = document.createElement("option");
+            opt1.value = t;
+            opt1.textContent = t;
+            selectTurma.appendChild(opt1);
+
+            const opt2 = document.createElement("option");
+            opt2.value = t;
+            opt2.textContent = t;
+            filtroTurma.appendChild(opt2);
+        });
+
+        // Preenche modalidades no filtro público
+        MODALIDADES.forEach(m => {
+            const opt = document.createElement("option");
+            opt.value = m;
+            opt.textContent = m;
+            filtroModalidade.appendChild(opt);
+        });
+
+        // Cria os checkboxes de modalidades
+        MODALIDADES.forEach(mod => {
+            const div = document.createElement("div");
+            div.className = "modalidade-item";
+
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.value = mod;
+            checkbox.classList.add("chkModalidade");
+
+            const infoDiv = document.createElement("div");
+            const lbl = document.createElement("span");
+            lbl.className = "modalidade-label";
+            lbl.textContent = mod;
+
+            const vagas = document.createElement("span");
+            vagas.className = "modalidade-vagas";
+            vagas.dataset.modLabel = mod;
+            vagas.textContent = "Carregando vagas...";
+
+            infoDiv.appendChild(lbl);
+            infoDiv.appendChild(vagas);
+
+            div.appendChild(checkbox);
+            div.appendChild(infoDiv);
+
+            modalidadesContainer.appendChild(div);
+        });
+
+        // Limitar a 2 modalidades por aluno
+        modalidadesContainer.addEventListener("change", (e) => {
+            if (e.target.classList.contains("chkModalidade")) {
+                const selecionados = document.querySelectorAll(".chkModalidade:checked");
+                if (selecionados.length > LIMITE_MODALIDADES_POR_ALUNO) {
+                    e.target.checked = false;
+                    alert(`Você só pode escolher até ${LIMITE_MODALIDADES_POR_ALUNO} modalidades.`);
+                }
+            }
+        });
+
+        // Atualizar disponibilidade quando turma muda
+        selectTurma.addEventListener("change", atualizarDisponibilidadeModalidades);
+
+        // Filtros da tabela pública
+        filtroTurma.addEventListener("change", renderizarTabelaPublica);
+        filtroModalidade.addEventListener("change", renderizarTabelaPublica);
+
+        // Botão "Ver inscritos" alterna entre formulário e painel
+        document.getElementById("btnToggleInscritos").addEventListener("click", alternarPainelInscritos);
+
+        // Botão área admin
+        document.getElementById("btnAdminArea").addEventListener("click", () => {
+            if (!isAdmin) {
+                const senha = prompt("Digite a senha da área administrativa:");
+                if (senha === ADMIN_PASSWORD) {
+                    isAdmin = true;
+                    document.getElementById("adminSection").style.display = "block";
+                    alert("Acesso liberado à Área Administrativa.");
+                    renderizarTabelaAdmin();
+                } else if (senha !== null) {
+                    alert("Senha incorreta.");
+                }
+            } else {
+                document.getElementById("adminSection").scrollIntoView({ behavior: "smooth" });
+            }
+        });
+
+        // Envio do formulário
+        document.getElementById("formInscricao").addEventListener("submit", handleSubmitInscricao);
+
+        // Botão adicionar exceção de nome
+        document.getElementById("btnAdicionarExcecao").addEventListener("click", handleAdicionarExcecao);
+
+        // Iniciar listeners em tempo real do Firestore
+        iniciarListenerInscricoes();
+        iniciarListenerExcecoes();
+    });
+
+    function alternarPainelInscritos() {
+        const secForm = document.getElementById("secInscricao");
+        const secInscritos = document.getElementById("secInscritos");
+        const btn = document.getElementById("btnToggleInscritos");
+
+        mostrandoInscritos = !mostrandoInscritos;
+        if (mostrandoInscritos) {
+            secForm.style.display = "none";
+            secInscritos.style.display = "block";
+            btn.textContent = "⬅ Voltar para inscrição";
+            document.getElementById("secInscritos").scrollIntoView({ behavior: "smooth" });
+        } else {
+            secForm.style.display = "block";
+            secInscritos.style.display = "none";
+            btn.textContent = "👀 Ver inscritos";
+            document.getElementById("secInscricao").scrollIntoView({ behavior: "smooth" });
+        }
+    }
+
+    // ============================
+    // 6) LISTENERS FIRESTORE
+    // ============================
+
+    function iniciarListenerInscricoes() {
+        db.collection("inscricoes")
+            .orderBy("timestamp", "asc")
+            .onSnapshot((snapshot) => {
+                todasInscricoes = [];
+                countsPorTurmaModalidade = {};
+
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const nome = data.nome || "";
+                    const nomeNormalizado = data.nomeNormalizado || normalizarNome(nome);
+
+                    const registro = {
+                        id: doc.id,
+                        ...data,
+                        nomeNormalizado
+                    };
+                    todasInscricoes.push(registro);
+
+                    const turma = data.turma;
+                    const modalidades = data.modalidades || [];
+                    if (!countsPorTurmaModalidade[turma]) {
+                        countsPorTurmaModalidade[turma] = {};
+                    }
+                    modalidades.forEach((m) => {
+                        if (!countsPorTurmaModalidade[turma][m]) {
+                            countsPorTurmaModalidade[turma][m] = 0;
+                        }
+                        countsPorTurmaModalidade[turma][m]++;
+                    });
+                });
+
+                atualizarDisponibilidadeModalidades();
+                renderizarTabelaPublica();
+                renderizarTabelaAdmin();
+            }, (error) => {
+                console.error("Erro ao ouvir inscrições em tempo real:", error);
+            });
+    }
+
+    function iniciarListenerExcecoes() {
+        db.collection("nomesExcecao")
+            .orderBy("nomeOriginal")
+            .onSnapshot((snapshot) => {
+                nomesExcecao = [];
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    nomesExcecao.push({
+                        id: doc.id,
+                        nomeOriginal: data.nomeOriginal,
+                        nomeNormalizado: data.nomeNormalizado
+                    });
+                });
+                renderizarListaExcecoes();
+            }, (error) => {
+                console.error("Erro ao ouvir exceções de nome:", error);
+            });
+    }
+
+    // ============================
+    // 7) FORMULÁRIO DE INSCRIÇÃO
+    // ============================
+
+    async function handleSubmitInscricao(event) {
+        event.preventDefault();
+        const msgBox = document.getElementById("msgForm");
+        msgBox.innerHTML = "";
+
+        const nome = document.getElementById("nome").value.trim();
+        const turma = document.getElementById("turma").value;
+        const turno = document.getElementById("turno").value;
+        const camisaNumero = document.getElementById("camisaNumero").value.trim();
+        const observacoes = document.getElementById("observacoes").value.trim();
+
+        const selecionados = Array.from(document.querySelectorAll(".chkModalidade:checked")).map(c => c.value);
+
+        const partesNome = nome.split(/\s+/).filter(Boolean);
+        const qtdPartes = partesNome.length;
+        const nomeNormalizado = normalizarNome(nome);
+
+        // Regra do nome: mínimo 4 nomes, a menos que esteja autorizado
+        if (qtdPartes < 4) {
+            const autorizado = nomesExcecao.some(e => e.nomeNormalizado === nomeNormalizado);
+            if (!autorizado) {
+                mostrarMensagemForm(
+                    "Seu nome tem menos de três nomes. Envie uma mensagem no chat do Instagram do colégio para análise da coordenação.",
+                    false
+                );
+                return;
+            }
+        }
+
+        if (!nome || !turma || !turno) {
+            mostrarMensagemForm("Preencha nome, turma e turno.", false);
+            return;
+        }
+        if (selecionados.length === 0) {
+            mostrarMensagemForm("Escolha pelo menos 1 modalidade.", false);
+            return;
+        }
+        if (selecionados.length > LIMITE_MODALIDADES_POR_ALUNO) {
+            mostrarMensagemForm(`Você só pode escolher até ${LIMITE_MODALIDADES_POR_ALUNO} modalidades.`, false);
+            return;
+        }
+
+        // Verificar se alguma modalidade da turma já está cheia
+        for (const mod of selecionados) {
+            const qtdAtual = (countsPorTurmaModalidade[turma] && countsPorTurmaModalidade[turma][mod]) || 0;
+            if (qtdAtual >= LIMITE_POR_MODALIDADE_TURMA) {
+                mostrarMensagemForm(`A modalidade "${mod}" está LOTADA para a turma ${turma}. Escolha outra modalidade.`, false);
+                return;
+            }
+        }
+
+        // Garantir que o mesmo aluno não se inscreva 2x (mesmo nome normalizado + mesma turma)
+        const jaTem = todasInscricoes.find(i =>
+            i.nomeNormalizado === nomeNormalizado &&
+            i.turma === turma
+        );
+        if (jaTem) {
+            mostrarMensagemForm("Já existe uma inscrição para este nome nesta turma. Procure a coordenação se precisar alterar.", false);
+            return;
+        }
+
+        try {
+            await db.collection("inscricoes").add({
+                nome,
+                nomeNormalizado,
+                turma,
+                turno,
+                camisaNumero: camisaNumero || null,
+                modalidades: selecionados,
+                observacoes: observacoes || null,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            mostrarMensagemForm("Inscrição realizada com sucesso! ✅", true);
+            document.getElementById("formInscricao").reset();
+            atualizarDisponibilidadeModalidades();
+        } catch (error) {
+            console.error("Erro ao salvar inscrição:", error);
+            mostrarMensagemForm("Ocorreu um erro ao salvar sua inscrição. Tente novamente.", false);
+        }
+    }
+
+    function mostrarMensagemForm(texto, sucesso) {
+        const msgBox = document.getElementById("msgForm");
+        msgBox.innerHTML = "";
+        const div = document.createElement("div");
+        div.className = sucesso ? "msg-sucesso" : "msg-erro";
+        div.textContent = texto;
+        msgBox.appendChild(div);
+    }
+
+    // ============================
+    // 8) DISPONIBILIDADE DAS MODALIDADES
+    // ============================
+
+    function atualizarDisponibilidadeModalidades() {
+        const turma = document.getElementById("turma").value;
+        const spans = document.querySelectorAll("[data-mod-label]");
+        const checkboxes = document.querySelectorAll(".chkModalidade");
+
+        spans.forEach(span => {
+            const mod = span.dataset.modLabel;
+            let textoBase = "";
+            if (!turma) {
+                textoBase = `${mod} (selecione uma turma primeiro)`;
+                span.textContent = textoBase;
+                span.classList.remove("modalidade-lotado");
+            } else {
+                const qtd = (countsPorTurmaModalidade[turma] && countsPorTurmaModalidade[turma][mod]) || 0;
+                if (qtd >= LIMITE_POR_MODALIDADE_TURMA) {
+                    textoBase = `${mod} (LOTADO - ${qtd}/${LIMITE_POR_MODALIDADE_TURMA})`;
+                    span.classList.add("modalidade-lotado");
+                } else {
+                    textoBase = `${mod} (${qtd}/${LIMITE_POR_MODALIDADE_TURMA} vagas ocupadas)`;
+                    span.classList.remove("modalidade-lotado");
+                }
+                span.textContent = textoBase;
+            }
+        });
+
+        checkboxes.forEach(chk => {
+            const mod = chk.value;
+            if (!turma) {
+                chk.disabled = true;
+                chk.checked = false;
+            } else {
+                const qtd = (countsPorTurmaModalidade[turma] && countsPorTurmaModalidade[turma][mod]) || 0;
+                if (qtd >= LIMITE_POR_MODALIDADE_TURMA) {
+                    chk.disabled = true;
+                    chk.checked = false;
+                } else {
+                    chk.disabled = false;
+                }
+            }
+        });
+    }
+
+    // ============================
+    // 9) TABELA PÚBLICA (SÓ NOME + TURMA)
+    // ============================
+
+    function renderizarTabelaPublica() {
+        const corpo = document.querySelector("#tabelaPublica tbody");
+        corpo.innerHTML = "";
+
+        const filtroMod = document.getElementById("filtroModalidade").value;
+        const filtroTurma = document.getElementById("filtroTurma").value;
+
+        const listaFiltrada = todasInscricoes.filter(i => {
+            let ok = true;
+            if (filtroTurma !== "TODAS" && i.turma !== filtroTurma) ok = false;
+            if (filtroMod !== "TODAS" && !(i.modalidades || []).includes(filtroMod)) ok = false;
+            return ok;
+        });
+
+        if (listaFiltrada.length === 0) {
+            const tr = document.createElement("tr");
+            const td = document.createElement("td");
+            td.colSpan = 2;
+            td.textContent = "Nenhum inscrito encontrado com esses filtros.";
+            tr.appendChild(td);
+            corpo.appendChild(tr);
+            return;
+        }
+
+        listaFiltrada.forEach(i => {
+            const tr = document.createElement("tr");
+            const tdNome = document.createElement("td");
+            const tdTurma = document.createElement("td");
+
+            tdNome.textContent = i.nome;
+            tdTurma.textContent = i.turma;
+
+            tr.appendChild(tdNome);
+            tr.appendChild(tdTurma);
+            corpo.appendChild(tr);
+        });
+    }
+
+    // ============================
+    // 10) TABELA ADMIN COMPLETA
+    // ============================
+
+    function renderizarTabelaAdmin() {
+        if (!isAdmin) return;
+        const corpo = document.querySelector("#tabelaAdmin tbody");
+        corpo.innerHTML = "";
+
+        if (todasInscricoes.length === 0) {
+            const tr = document.createElement("tr");
+            const td = document.createElement("td");
+            td.colSpan = 7;
+            td.textContent = "Ainda não há inscrições.";
+            tr.appendChild(td);
+            corpo.appendChild(tr);
+            return;
+        }
+
+        todasInscricoes.forEach(i => {
+            const tr = document.createElement("tr");
+
+            const tdNome = document.createElement("td");
+            const tdTurma = document.createElement("td");
+            const tdTurno = document.createElement("td");
+            const tdCamisa = document.createElement("td");
+            const tdMods = document.createElement("td");
+            const tdObs = document.createElement("td");
+            const tdData = document.createElement("td");
+
+            tdNome.textContent = i.nome || "";
+            tdTurma.textContent = i.turma || "";
+            tdTurno.textContent = i.turno || "";
+            tdCamisa.textContent = i.camisaNumero || "";
+            tdMods.textContent = (i.modalidades || []).join(", ");
+            tdObs.textContent = i.observacoes || "";
+
+            if (i.timestamp && i.timestamp.toDate) {
+                const d = i.timestamp.toDate();
+                const dataStr = d.toLocaleDateString("pt-BR");
+                const horaStr = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+                tdData.textContent = `${dataStr} ${horaStr}`;
+            } else {
+                tdData.textContent = "-";
+            }
+
+            tr.appendChild(tdNome);
+            tr.appendChild(tdTurma);
+            tr.appendChild(tdTurno);
+            tr.appendChild(tdCamisa);
+            tr.appendChild(tdMods);
+            tr.appendChild(tdObs);
+            tr.appendChild(tdData);
+
+            corpo.appendChild(tr);
+        });
+    }
+
+    // ============================
+    // 11) EXCEÇÕES DE NOME (ADMIN)
+    // ============================
+
+    async function handleAdicionarExcecao() {
+        const input = document.getElementById("nomeExcecao");
+        const nomeOriginal = input.value.trim();
+        if (!nomeOriginal) {
+            alert("Digite um nome para autorizar.");
+            return;
+        }
+        const nomeNorm = normalizarNome(nomeOriginal);
+        if (!nomeNorm) {
+            alert("Nome inválido.");
+            return;
+        }
+
+        // Evita duplicar exceção
+        const jaTem = nomesExcecao.some(e => e.nomeNormalizado === nomeNorm);
+        if (jaTem) {
+            alert("Esse nome já está autorizado como exceção.");
+            return;
+        }
+
+        try {
+            await db.collection("nomesExcecao").add({
+                nomeOriginal,
+                nomeNormalizado: nomeNorm
+            });
+            input.value = "";
+            alert("Nome autorizado com sucesso.");
+        } catch (error) {
+            console.error("Erro ao salvar exceção de nome:", error);
+            alert("Erro ao salvar exceção. Tente novamente.");
+        }
+    }
+
+    function renderizarListaExcecoes() {
+        const ul = document.getElementById("listaExcecoes");
+        ul.innerHTML = "";
+        if (nomesExcecao.length === 0) {
+            const li = document.createElement("li");
+            li.textContent = "Nenhum nome com menos de 4 nomes autorizado ainda.";
+            ul.appendChild(li);
+            return;
+        }
+        nomesExcecao.forEach(e => {
+            const li = document.createElement("li");
+            li.textContent = e.nomeOriginal;
+            ul.appendChild(li);
+        });
+    }
+</script>
+</body>
+</html>
