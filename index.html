@@ -228,7 +228,6 @@
             margin-top: 4px;
         }
 
-        /* Área admin */
         #adminSection {
             display: none;
         }
@@ -239,9 +238,21 @@
             color: #555;
         }
 
-        /* Painel de inscritos só aparece quando clicar no botão */
         #secInscritos {
             display: none;
+        }
+
+        .admin-actions {
+            margin-top: 14px;
+            padding: 10px;
+            border-radius: 8px;
+            background: #f9fbff;
+            border: 1px dashed #c5cde0;
+        }
+        .admin-actions h3 {
+            margin-top: 0;
+            font-size: 0.95rem;
+            color: var(--azul);
         }
     </style>
 </head>
@@ -364,11 +375,11 @@
     <section class="card" id="adminSection">
         <h2>Área Administrativa</h2>
         <div class="admin-tag">Apenas para coordenação / organização da Interclasse</div>
-        <small>Aqui aparecem todas as inscrições com detalhes, além de um controle para autorizar nomes com menos de 4 nomes.</small>
+        <small>Aqui aparecem todas as inscrições com detalhes, além de um controle para autorizar nomes com menos de 4 nomes e cancelar inscrições.</small>
 
         <!-- BLOCO DE EXCEÇÕES DE NOME -->
-        <div style="margin-top:12px; padding:10px; border-radius:8px; background:#f9fbff; border:1px dashed #c5cde0;">
-            <strong>Exceção para nome incompleto (menos de 4 nomes)</strong>
+        <div class="admin-actions">
+            <h3>Autorizar nome com menos de 4 nomes</h3>
             <p style="font-size:0.84rem; margin:4px 0 8px;">
                 Se algum aluno tiver nome com menos de 4 nomes e você quiser liberar a inscrição dele, digite o nome exatamente como ele será escrito no formulário e clique em <em>"Autorizar"</em>.
             </p>
@@ -377,6 +388,20 @@
                 <button id="btnAdicionarExcecao" class="btn btn-primaria">Autorizar nome</button>
             </div>
             <ul id="listaExcecoes" style="margin-top:8px; padding-left:18px; font-size:0.85rem;"></ul>
+        </div>
+
+        <!-- BLOCO DE CANCELAMENTO DE INSCRIÇÃO -->
+        <div class="admin-actions">
+            <h3>Cancelar inscrição</h3>
+            <p style="font-size:0.84rem; margin:4px 0 8px;">
+                Selecione um aluno para cancelar a inscrição. Isso remove o registro do banco e libera as vagas das modalidades daquela turma.
+            </p>
+            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                <select id="selectCancelar" style="flex:1; min-width:220px;">
+                    <option value="">Selecione um inscrito...</option>
+                </select>
+                <button id="btnCancelarInscricao" class="btn btn-primaria">Cancelar inscrição selecionada</button>
+            </div>
         </div>
 
         <div style="margin-top:14px;">
@@ -401,551 +426,634 @@
 </main>
 
 <script>
-    // ============================
-    // 1) CONFIGURAÇÃO DO FIREBASE
-    // ============================
+'use strict';
+/* ============================
+   1) CONFIGURAÇÃO DO FIREBASE
+   ============================ */
 
-    // Import the functions you need from the SDKs you need import { initializeApp } from "firebase/app"; // TODO: Add SDKs for Firebase products that you want to use // https://firebase.google.com/docs/web/setup#available-libraries // Your web app's Firebase configuration const firebaseConfig = { apiKey: "AIzaSyDlYOQYS7jz1MPtACchOicuQnFWrBaFTL0", authDomain: "interclasse-mansoes-odisseia.firebaseapp.com", projectId: "interclasse-mansoes-odisseia", storageBucket: "interclasse-mansoes-odisseia.firebasestorage.app", messagingSenderId: "24382499047", appId: "1:24382499047:web:41103e7a166730c0761a42" }; // Initialize Firebase const app = initializeApp(firebaseConfig);
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+// TODO: SUBSTITUA PELOS DADOS DO SEU PROJETO FIREBASE
+const firebaseConfig = {
+    apiKey: "SUA_API_KEY_AQUI",
+    authDomain: "SEU_PROJETO.firebaseapp.com",
+    projectId: "SEU_PROJECT_ID",
+    storageBucket: "SEU_PROJECT_ID.appspot.com",
+    messagingSenderId: "SENDER_ID",
+    appId: "APP_ID"
+};
 
-    // ============================
-    // 2) DADOS FIXOS (MODALIDADES / TURMAS)
-    // ============================
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-    const MODALIDADES = [
-        "FUTSAL",
-        "QUEIMADA MISTA",
-        "DOMINÓ",
-        "FUTMESA",
-        "TÊNIS DE MESA",
-        "XADREZ"
-    ];
+/* ============================
+   2) DADOS FIXOS
+   ============================ */
 
-    const TURMAS = [
-        "6ºA","6ºB","6ºC","6ºD","6ºE","6ºF","6ºG",
-        "7ºA","7ºB","7ºC","7ºD","7ºE","7ºF",
-        "8ºA","8ºB","8ºC","8ºD","8ºE","8ºF",
-        "9ºA","9ºB","9ºC","9ºD","9ºE",
-        "1ºA","1ºB","1ºC","1ºD","1ºE","1ºF",
-        "2ºA","2ºB","2ºC",
-        "3ºA","3ºB","3ºC"
-    ];
+const MODALIDADES = [
+    "FUTSAL",
+    "QUEIMADA MISTA",
+    "DOMINÓ",
+    "FUTMESA",
+    "TÊNIS DE MESA",
+    "XADREZ"
+];
 
-    const LIMITE_POR_MODALIDADE_TURMA = 8;
-    const LIMITE_MODALIDADES_POR_ALUNO = 2;
+const TURMAS = [
+    "6ºA","6ºB","6ºC","6ºD","6ºE","6ºF","6ºG",
+    "7ºA","7ºB","7ºC","7ºD","7ºE","7ºF",
+    "8ºA","8ºB","8ºC","8ºD","8ºE","8ºF",
+    "9ºA","9ºB","9ºC","9ºD","9ºE",
+    "1ºA","1ºB","1ºC","1ºD","1ºE","1ºF",
+    "2ºA","2ºB","2ºC",
+    "3ºA","3ºB","3ºC"
+];
 
-    // Senha simples de admin (VOCÊ PODE ALTERAR AQUI)
-    const ADMIN_PASSWORD = "movimenta2025";
+const LIMITE_POR_MODALIDADE_TURMA = 8;
+const LIMITE_MODALIDADES_POR_ALUNO = 2;
+const ADMIN_PASSWORD = "movimenta2025";
 
-    // ============================
-    // 3) ESTADO GLOBAL
-    // ============================
+/* ============================
+   3) ESTADO GLOBAL
+   ============================ */
 
-    let countsPorTurmaModalidade = {};
-    let todasInscricoes = [];
-    let isAdmin = false;
-    let mostrandoInscritos = false;
-    let nomesExcecao = []; // {id, nomeOriginal, nomeNormalizado}
+let countsPorTurmaModalidade = {};
+let todasInscricoes = [];
+let isAdmin = false;
+let mostrandoInscritos = false;
+let nomesExcecao = []; // {id, nomeOriginal, nomeNormalizado}
 
-    // ============================
-    // 4) FUNÇÕES AUXILIARES
-    // ============================
+/* ============================
+   4) FUNÇÕES AUXILIARES
+   ============================ */
 
-    function normalizarNome(str) {
-        if (!str) return "";
-        return str
-            .trim()
-            .toLowerCase()
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "") // tira acentos
-            .replace(/\s+/g, " ");
+function normalizarNome(str) {
+    if (!str) return "";
+    return str
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, " ");
+}
+
+function mostrarMensagemForm(texto, sucesso) {
+    const msgBox = document.getElementById("msgForm");
+    if (!msgBox) return;
+    msgBox.innerHTML = "";
+    const div = document.createElement("div");
+    div.className = sucesso ? "msg-sucesso" : "msg-erro";
+    div.textContent = texto;
+    msgBox.appendChild(div);
+}
+
+/* ============================
+   5) INICIALIZAÇÃO (PC + CELULAR)
+   ============================ */
+
+function initInterclasse() {
+    const selectTurma = document.getElementById("turma");
+    const filtroTurma = document.getElementById("filtroTurma");
+    const filtroModalidade = document.getElementById("filtroModalidade");
+    const modalidadesContainer = document.getElementById("modalidadesContainer");
+
+    if (!selectTurma || !filtroTurma || !filtroModalidade || !modalidadesContainer) {
+        console.error("Erro ao carregar elementos principais. Verifique o HTML.");
+        return;
     }
 
-    // ============================
-    // 5) INICIALIZAÇÃO DO DOM
-    // ============================
+    // Preenche turmas no formulário e no filtro público
+    TURMAS.forEach(function(t) {
+        const opt1 = document.createElement("option");
+        opt1.value = t;
+        opt1.textContent = t;
+        selectTurma.appendChild(opt1);
 
-    document.addEventListener("DOMContentLoaded", () => {
-        const selectTurma = document.getElementById("turma");
-        const filtroTurma = document.getElementById("filtroTurma");
-        const filtroModalidade = document.getElementById("filtroModalidade");
-        const modalidadesContainer = document.getElementById("modalidadesContainer");
-
-        // Preenche turmas nos selects
-        TURMAS.forEach(t => {
-            const opt1 = document.createElement("option");
-            opt1.value = t;
-            opt1.textContent = t;
-            selectTurma.appendChild(opt1);
-
-            const opt2 = document.createElement("option");
-            opt2.value = t;
-            opt2.textContent = t;
-            filtroTurma.appendChild(opt2);
-        });
-
-        // Preenche modalidades no filtro público
-        MODALIDADES.forEach(m => {
-            const opt = document.createElement("option");
-            opt.value = m;
-            opt.textContent = m;
-            filtroModalidade.appendChild(opt);
-        });
-
-        // Cria os checkboxes de modalidades
-        MODALIDADES.forEach(mod => {
-            const div = document.createElement("div");
-            div.className = "modalidade-item";
-
-            const checkbox = document.createElement("input");
-            checkbox.type = "checkbox";
-            checkbox.value = mod;
-            checkbox.classList.add("chkModalidade");
-
-            const infoDiv = document.createElement("div");
-            const lbl = document.createElement("span");
-            lbl.className = "modalidade-label";
-            lbl.textContent = mod;
-
-            const vagas = document.createElement("span");
-            vagas.className = "modalidade-vagas";
-            vagas.dataset.modLabel = mod;
-            vagas.textContent = "Carregando vagas...";
-
-            infoDiv.appendChild(lbl);
-            infoDiv.appendChild(vagas);
-
-            div.appendChild(checkbox);
-            div.appendChild(infoDiv);
-
-            modalidadesContainer.appendChild(div);
-        });
-
-        // Limitar a 2 modalidades por aluno
-        modalidadesContainer.addEventListener("change", (e) => {
-            if (e.target.classList.contains("chkModalidade")) {
-                const selecionados = document.querySelectorAll(".chkModalidade:checked");
-                if (selecionados.length > LIMITE_MODALIDADES_POR_ALUNO) {
-                    e.target.checked = false;
-                    alert(`Você só pode escolher até ${LIMITE_MODALIDADES_POR_ALUNO} modalidades.`);
-                }
-            }
-        });
-
-        // Atualizar disponibilidade quando turma muda
-        selectTurma.addEventListener("change", atualizarDisponibilidadeModalidades);
-
-        // Filtros da tabela pública
-        filtroTurma.addEventListener("change", renderizarTabelaPublica);
-        filtroModalidade.addEventListener("change", renderizarTabelaPublica);
-
-        // Botão "Ver inscritos" alterna entre formulário e painel
-        document.getElementById("btnToggleInscritos").addEventListener("click", alternarPainelInscritos);
-
-        // Botão área admin
-        document.getElementById("btnAdminArea").addEventListener("click", () => {
-            if (!isAdmin) {
-                const senha = prompt("Digite a senha da área administrativa:");
-                if (senha === ADMIN_PASSWORD) {
-                    isAdmin = true;
-                    document.getElementById("adminSection").style.display = "block";
-                    alert("Acesso liberado à Área Administrativa.");
-                    renderizarTabelaAdmin();
-                } else if (senha !== null) {
-                    alert("Senha incorreta.");
-                }
-            } else {
-                document.getElementById("adminSection").scrollIntoView({ behavior: "smooth" });
-            }
-        });
-
-        // Envio do formulário
-        document.getElementById("formInscricao").addEventListener("submit", handleSubmitInscricao);
-
-        // Botão adicionar exceção de nome
-        document.getElementById("btnAdicionarExcecao").addEventListener("click", handleAdicionarExcecao);
-
-        // Iniciar listeners em tempo real do Firestore
-        iniciarListenerInscricoes();
-        iniciarListenerExcecoes();
+        const opt2 = document.createElement("option");
+        opt2.value = t;
+        opt2.textContent = t;
+        filtroTurma.appendChild(opt2);
     });
 
-    function alternarPainelInscritos() {
-        const secForm = document.getElementById("secInscricao");
-        const secInscritos = document.getElementById("secInscritos");
-        const btn = document.getElementById("btnToggleInscritos");
+    // Preenche modalidades no filtro público
+    MODALIDADES.forEach(function(m) {
+        const opt = document.createElement("option");
+        opt.value = m;
+        opt.textContent = m;
+        filtroModalidade.appendChild(opt);
+    });
 
-        mostrandoInscritos = !mostrandoInscritos;
-        if (mostrandoInscritos) {
-            secForm.style.display = "none";
-            secInscritos.style.display = "block";
-            btn.textContent = "⬅ Voltar para inscrição";
-            document.getElementById("secInscritos").scrollIntoView({ behavior: "smooth" });
-        } else {
-            secForm.style.display = "block";
-            secInscritos.style.display = "none";
-            btn.textContent = "👀 Ver inscritos";
-            document.getElementById("secInscricao").scrollIntoView({ behavior: "smooth" });
-        }
-    }
-
-    // ============================
-    // 6) LISTENERS FIRESTORE
-    // ============================
-
-    function iniciarListenerInscricoes() {
-        db.collection("inscricoes")
-            .orderBy("timestamp", "asc")
-            .onSnapshot((snapshot) => {
-                todasInscricoes = [];
-                countsPorTurmaModalidade = {};
-
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    const nome = data.nome || "";
-                    const nomeNormalizado = data.nomeNormalizado || normalizarNome(nome);
-
-                    const registro = {
-                        id: doc.id,
-                        ...data,
-                        nomeNormalizado
-                    };
-                    todasInscricoes.push(registro);
-
-                    const turma = data.turma;
-                    const modalidades = data.modalidades || [];
-                    if (!countsPorTurmaModalidade[turma]) {
-                        countsPorTurmaModalidade[turma] = {};
-                    }
-                    modalidades.forEach((m) => {
-                        if (!countsPorTurmaModalidade[turma][m]) {
-                            countsPorTurmaModalidade[turma][m] = 0;
-                        }
-                        countsPorTurmaModalidade[turma][m]++;
-                    });
-                });
-
-                atualizarDisponibilidadeModalidades();
-                renderizarTabelaPublica();
-                renderizarTabelaAdmin();
-            }, (error) => {
-                console.error("Erro ao ouvir inscrições em tempo real:", error);
-            });
-    }
-
-    function iniciarListenerExcecoes() {
-        db.collection("nomesExcecao")
-            .orderBy("nomeOriginal")
-            .onSnapshot((snapshot) => {
-                nomesExcecao = [];
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    nomesExcecao.push({
-                        id: doc.id,
-                        nomeOriginal: data.nomeOriginal,
-                        nomeNormalizado: data.nomeNormalizado
-                    });
-                });
-                renderizarListaExcecoes();
-            }, (error) => {
-                console.error("Erro ao ouvir exceções de nome:", error);
-            });
-    }
-
-    // ============================
-    // 7) FORMULÁRIO DE INSCRIÇÃO
-    // ============================
-
-    async function handleSubmitInscricao(event) {
-        event.preventDefault();
-        const msgBox = document.getElementById("msgForm");
-        msgBox.innerHTML = "";
-
-        const nome = document.getElementById("nome").value.trim();
-        const turma = document.getElementById("turma").value;
-        const turno = document.getElementById("turno").value;
-        const camisaNumero = document.getElementById("camisaNumero").value.trim();
-        const observacoes = document.getElementById("observacoes").value.trim();
-
-        const selecionados = Array.from(document.querySelectorAll(".chkModalidade:checked")).map(c => c.value);
-
-        const partesNome = nome.split(/\s+/).filter(Boolean);
-        const qtdPartes = partesNome.length;
-        const nomeNormalizado = normalizarNome(nome);
-
-        // Regra do nome: mínimo 4 nomes, a menos que esteja autorizado
-        if (qtdPartes < 4) {
-            const autorizado = nomesExcecao.some(e => e.nomeNormalizado === nomeNormalizado);
-            if (!autorizado) {
-                mostrarMensagemForm(
-                    "Seu nome tem menos de três nomes. Envie uma mensagem no chat do Instagram do colégio para análise da coordenação.",
-                    false
-                );
-                return;
-            }
-        }
-
-        if (!nome || !turma || !turno) {
-            mostrarMensagemForm("Preencha nome, turma e turno.", false);
-            return;
-        }
-        if (selecionados.length === 0) {
-            mostrarMensagemForm("Escolha pelo menos 1 modalidade.", false);
-            return;
-        }
-        if (selecionados.length > LIMITE_MODALIDADES_POR_ALUNO) {
-            mostrarMensagemForm(`Você só pode escolher até ${LIMITE_MODALIDADES_POR_ALUNO} modalidades.`, false);
-            return;
-        }
-
-        // Verificar se alguma modalidade da turma já está cheia
-        for (const mod of selecionados) {
-            const qtdAtual = (countsPorTurmaModalidade[turma] && countsPorTurmaModalidade[turma][mod]) || 0;
-            if (qtdAtual >= LIMITE_POR_MODALIDADE_TURMA) {
-                mostrarMensagemForm(`A modalidade "${mod}" está LOTADA para a turma ${turma}. Escolha outra modalidade.`, false);
-                return;
-            }
-        }
-
-        // Garantir que o mesmo aluno não se inscreva 2x (mesmo nome normalizado + mesma turma)
-        const jaTem = todasInscricoes.find(i =>
-            i.nomeNormalizado === nomeNormalizado &&
-            i.turma === turma
-        );
-        if (jaTem) {
-            mostrarMensagemForm("Já existe uma inscrição para este nome nesta turma. Procure a coordenação se precisar alterar.", false);
-            return;
-        }
-
-        try {
-            await db.collection("inscricoes").add({
-                nome,
-                nomeNormalizado,
-                turma,
-                turno,
-                camisaNumero: camisaNumero || null,
-                modalidades: selecionados,
-                observacoes: observacoes || null,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            mostrarMensagemForm("Inscrição realizada com sucesso! ✅", true);
-            document.getElementById("formInscricao").reset();
-            atualizarDisponibilidadeModalidades();
-        } catch (error) {
-            console.error("Erro ao salvar inscrição:", error);
-            mostrarMensagemForm("Ocorreu um erro ao salvar sua inscrição. Tente novamente.", false);
-        }
-    }
-
-    function mostrarMensagemForm(texto, sucesso) {
-        const msgBox = document.getElementById("msgForm");
-        msgBox.innerHTML = "";
+    // Cria os checkboxes de modalidades
+    MODALIDADES.forEach(function(mod) {
         const div = document.createElement("div");
-        div.className = sucesso ? "msg-sucesso" : "msg-erro";
-        div.textContent = texto;
-        msgBox.appendChild(div);
+        div.className = "modalidade-item";
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.value = mod;
+        checkbox.classList.add("chkModalidade");
+
+        const infoDiv = document.createElement("div");
+        const lbl = document.createElement("span");
+        lbl.className = "modalidade-label";
+        lbl.textContent = mod;
+
+        const vagas = document.createElement("span");
+        vagas.className = "modalidade-vagas";
+        vagas.dataset.modLabel = mod;
+        vagas.textContent = "Carregando vagas...";
+
+        infoDiv.appendChild(lbl);
+        infoDiv.appendChild(vagas);
+
+        div.appendChild(checkbox);
+        div.appendChild(infoDiv);
+        modalidadesContainer.appendChild(div);
+    });
+
+    // Limitar a 2 modalidades
+    modalidadesContainer.addEventListener("change", function(e) {
+        if (e.target.classList.contains("chkModalidade")) {
+            const selecionados = document.querySelectorAll(".chkModalidade:checked");
+            if (selecionados.length > LIMITE_MODALIDADES_POR_ALUNO) {
+                e.target.checked = false;
+                alert("Você só pode escolher até " + LIMITE_MODALIDADES_POR_ALUNO + " modalidades.");
+            }
+        }
+    });
+
+    // Atualizar disponibilidade quando turma muda
+    selectTurma.addEventListener("change", atualizarDisponibilidadeModalidades);
+
+    // Filtros da tabela pública
+    filtroTurma.addEventListener("change", renderizarTabelaPublica);
+    filtroModalidade.addEventListener("change", renderizarTabelaPublica);
+
+    // Botão "Ver inscritos" alterna entre formulário e painel
+    document.getElementById("btnToggleInscritos").addEventListener("click", alternarPainelInscritos);
+
+    // Botão área admin
+    document.getElementById("btnAdminArea").addEventListener("click", function() {
+        if (!isAdmin) {
+            const senha = prompt("Digite a senha da área administrativa:");
+            if (senha === ADMIN_PASSWORD) {
+                isAdmin = true;
+                document.getElementById("adminSection").style.display = "block";
+                alert("Acesso liberado à Área Administrativa.");
+                renderizarTabelaAdmin();
+            } else if (senha !== null) {
+                alert("Senha incorreta.");
+            }
+        } else {
+            document.getElementById("adminSection").scrollIntoView({ behavior: "smooth" });
+        }
+    });
+
+    // Envio do formulário
+    document.getElementById("formInscricao").addEventListener("submit", handleSubmitInscricao);
+
+    // Botão adicionar exceção de nome
+    document.getElementById("btnAdicionarExcecao").addEventListener("click", handleAdicionarExcecao);
+
+    // Botão cancelar inscrição
+    document.getElementById("btnCancelarInscricao").addEventListener("click", handleCancelarInscricao);
+
+    // Iniciar listeners em tempo real
+    iniciarListenerInscricoes();
+    iniciarListenerExcecoes();
+}
+
+// Garantir que roda tanto em PC quanto em celular
+if (document.readyState === "complete" || document.readyState === "interactive") {
+    setTimeout(initInterclasse, 0);
+} else {
+    window.addEventListener("load", initInterclasse);
+}
+
+/* ============================
+   6) LISTENERS FIRESTORE
+   ============================ */
+
+function iniciarListenerInscricoes() {
+    db.collection("inscricoes")
+        .orderBy("timestamp", "asc")
+        .onSnapshot(function(snapshot) {
+            todasInscricoes = [];
+            countsPorTurmaModalidade = {};
+
+            snapshot.forEach(function(doc) {
+                const data = doc.data();
+                const nome = data.nome || "";
+                const nomeNormalizado = data.nomeNormalizado || normalizarNome(nome);
+
+                const registro = {
+                    id: doc.id,
+                    ...data,
+                    nomeNormalizado
+                };
+                todasInscricoes.push(registro);
+
+                const turma = data.turma;
+                const modalidades = data.modalidades || [];
+                if (!countsPorTurmaModalidade[turma]) {
+                    countsPorTurmaModalidade[turma] = {};
+                }
+                modalidades.forEach(function(m) {
+                    if (!countsPorTurmaModalidade[turma][m]) {
+                        countsPorTurmaModalidade[turma][m] = 0;
+                    }
+                    countsPorTurmaModalidade[turma][m]++;
+                });
+            });
+
+            atualizarDisponibilidadeModalidades();
+            renderizarTabelaPublica();
+            renderizarTabelaAdmin();
+            atualizarSelectCancelar();
+        }, function(error) {
+            console.error("Erro ao ouvir inscrições em tempo real:", error);
+        });
+}
+
+function iniciarListenerExcecoes() {
+    db.collection("nomesExcecao")
+        .orderBy("nomeOriginal")
+        .onSnapshot(function(snapshot) {
+            nomesExcecao = [];
+            snapshot.forEach(function(doc) {
+                const data = doc.data();
+                nomesExcecao.push({
+                    id: doc.id,
+                    nomeOriginal: data.nomeOriginal,
+                    nomeNormalizado: data.nomeNormalizado
+                });
+            });
+            renderizarListaExcecoes();
+        }, function(error) {
+            console.error("Erro ao ouvir exceções de nome:", error);
+        });
+}
+
+/* ============================
+   7) FORMULÁRIO DE INSCRIÇÃO
+   ============================ */
+
+async function handleSubmitInscricao(event) {
+    event.preventDefault();
+
+    const nome = document.getElementById("nome").value.trim();
+    const turma = document.getElementById("turma").value;
+    const turno = document.getElementById("turno").value;
+    const camisaNumero = document.getElementById("camisaNumero").value.trim();
+    const observacoes = document.getElementById("observacoes").value.trim();
+    const selecionados = Array.from(document.querySelectorAll(".chkModalidade:checked")).map(function(c) {
+        return c.value;
+    });
+
+    const partesNome = nome.split(/\s+/).filter(Boolean);
+    const qtdPartes = partesNome.length;
+    const nomeNormalizado = normalizarNome(nome);
+
+    if (qtdPartes < 4) {
+        const autorizado = nomesExcecao.some(function(e) { return e.nomeNormalizado === nomeNormalizado; });
+        if (!autorizado) {
+            mostrarMensagemForm(
+                "Seu nome tem menos de três nomes. Envie uma mensagem no chat do Instagram do colégio para análise da coordenação.",
+                false
+            );
+            return;
+        }
     }
 
-    // ============================
-    // 8) DISPONIBILIDADE DAS MODALIDADES
-    // ============================
+    if (!nome || !turma || !turno) {
+        mostrarMensagemForm("Preencha nome, turma e turno.", false);
+        return;
+    }
+    if (selecionados.length === 0) {
+        mostrarMensagemForm("Escolha pelo menos 1 modalidade.", false);
+        return;
+    }
+    if (selecionados.length > LIMITE_MODALIDADES_POR_ALUNO) {
+        mostrarMensagemForm("Você só pode escolher até " + LIMITE_MODALIDADES_POR_ALUNO + " modalidades.", false);
+        return;
+    }
 
-    function atualizarDisponibilidadeModalidades() {
-        const turma = document.getElementById("turma").value;
-        const spans = document.querySelectorAll("[data-mod-label]");
-        const checkboxes = document.querySelectorAll(".chkModalidade");
+    // Verificar se alguma modalidade da turma já está cheia
+    for (let i = 0; i < selecionados.length; i++) {
+        const mod = selecionados[i];
+        const qtdAtual = (countsPorTurmaModalidade[turma] && countsPorTurmaModalidade[turma][mod]) || 0;
+        if (qtdAtual >= LIMITE_POR_MODALIDADE_TURMA) {
+            mostrarMensagemForm('A modalidade "' + mod + '" está LOTADA para a turma ' + turma + '. Escolha outra modalidade.', false);
+            return;
+        }
+    }
 
-        spans.forEach(span => {
-            const mod = span.dataset.modLabel;
-            let textoBase = "";
-            if (!turma) {
-                textoBase = `${mod} (selecione uma turma primeiro)`;
-                span.textContent = textoBase;
-                span.classList.remove("modalidade-lotado");
-            } else {
-                const qtd = (countsPorTurmaModalidade[turma] && countsPorTurmaModalidade[turma][mod]) || 0;
-                if (qtd >= LIMITE_POR_MODALIDADE_TURMA) {
-                    textoBase = `${mod} (LOTADO - ${qtd}/${LIMITE_POR_MODALIDADE_TURMA})`;
-                    span.classList.add("modalidade-lotado");
-                } else {
-                    textoBase = `${mod} (${qtd}/${LIMITE_POR_MODALIDADE_TURMA} vagas ocupadas)`;
-                    span.classList.remove("modalidade-lotado");
-                }
-                span.textContent = textoBase;
-            }
+    // Garantir que o mesmo aluno não se inscreva 2x (nome normalizado + mesma turma)
+    const jaTem = todasInscricoes.find(function(i) {
+        return i.nomeNormalizado === nomeNormalizado && i.turma === turma;
+    });
+    if (jaTem) {
+        mostrarMensagemForm("Já existe uma inscrição para este nome nesta turma. Procure a coordenação se precisar alterar.", false);
+        return;
+    }
+
+    try {
+        await db.collection("inscricoes").add({
+            nome: nome,
+            nomeNormalizado: nomeNormalizado,
+            turma: turma,
+            turno: turno,
+            camisaNumero: camisaNumero || null,
+            modalidades: selecionados,
+            observacoes: observacoes || null,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        checkboxes.forEach(chk => {
-            const mod = chk.value;
-            if (!turma) {
+        mostrarMensagemForm("Inscrição realizada com sucesso! ✅", true);
+        document.getElementById("formInscricao").reset();
+        atualizarDisponibilidadeModalidades();
+    } catch (error) {
+        console.error("Erro ao salvar inscrição:", error);
+        mostrarMensagemForm("Ocorreu um erro ao salvar sua inscrição. Tente novamente.", false);
+    }
+}
+
+/* ============================
+   8) DISPONIBILIDADE DAS MODALIDADES
+   ============================ */
+
+function atualizarDisponibilidadeModalidades() {
+    const turma = document.getElementById("turma").value;
+    const spans = document.querySelectorAll("[data-mod-label]");
+    const checkboxes = document.querySelectorAll(".chkModalidade");
+
+    spans.forEach(function(span) {
+        const mod = span.dataset.modLabel;
+        let textoBase = "";
+        if (!turma) {
+            textoBase = mod + " (selecione uma turma primeiro)";
+            span.textContent = textoBase;
+            span.classList.remove("modalidade-lotado");
+        } else {
+            const qtd = (countsPorTurmaModalidade[turma] && countsPorTurmaModalidade[turma][mod]) || 0;
+            if (qtd >= LIMITE_POR_MODALIDADE_TURMA) {
+                textoBase = mod + " (LOTADO - " + qtd + "/" + LIMITE_POR_MODALIDADE_TURMA + ")";
+                span.classList.add("modalidade-lotado");
+            } else {
+                textoBase = mod + " (" + qtd + "/" + LIMITE_POR_MODALIDADE_TURMA + " vagas ocupadas)";
+                span.classList.remove("modalidade-lotado");
+            }
+            span.textContent = textoBase;
+        }
+    });
+
+    checkboxes.forEach(function(chk) {
+        const mod = chk.value;
+        if (!turma) {
+            chk.disabled = true;
+            chk.checked = false;
+        } else {
+            const qtd = (countsPorTurmaModalidade[turma] && countsPorTurmaModalidade[turma][mod]) || 0;
+            if (qtd >= LIMITE_POR_MODALIDADE_TURMA) {
                 chk.disabled = true;
                 chk.checked = false;
             } else {
-                const qtd = (countsPorTurmaModalidade[turma] && countsPorTurmaModalidade[turma][mod]) || 0;
-                if (qtd >= LIMITE_POR_MODALIDADE_TURMA) {
-                    chk.disabled = true;
-                    chk.checked = false;
-                } else {
-                    chk.disabled = false;
-                }
+                chk.disabled = false;
             }
-        });
+        }
+    });
+}
+
+/* ============================
+   9) TABELA PÚBLICA (SÓ NOME + TURMA)
+   ============================ */
+
+function renderizarTabelaPublica() {
+    const corpo = document.querySelector("#tabelaPublica tbody");
+    if (!corpo) return;
+    corpo.innerHTML = "";
+
+    const filtroMod = document.getElementById("filtroModalidade").value;
+    const filtroTurma = document.getElementById("filtroTurma").value;
+
+    const listaFiltrada = todasInscricoes.filter(function(i) {
+        let ok = true;
+        if (filtroTurma !== "TODAS" && i.turma !== filtroTurma) ok = false;
+        if (filtroMod !== "TODAS" && !(i.modalidades || []).includes(filtroMod)) ok = false;
+        return ok;
+    });
+
+    if (listaFiltrada.length === 0) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 2;
+        td.textContent = "Nenhum inscrito encontrado com esses filtros.";
+        tr.appendChild(td);
+        corpo.appendChild(tr);
+        return;
     }
 
-    // ============================
-    // 9) TABELA PÚBLICA (SÓ NOME + TURMA)
-    // ============================
+    listaFiltrada.forEach(function(i) {
+        const tr = document.createElement("tr");
+        const tdNome = document.createElement("td");
+        const tdTurma = document.createElement("td");
 
-    function renderizarTabelaPublica() {
-        const corpo = document.querySelector("#tabelaPublica tbody");
-        corpo.innerHTML = "";
+        tdNome.textContent = i.nome;
+        tdTurma.textContent = i.turma;
 
-        const filtroMod = document.getElementById("filtroModalidade").value;
-        const filtroTurma = document.getElementById("filtroTurma").value;
+        tr.appendChild(tdNome);
+        tr.appendChild(tdTurma);
+        corpo.appendChild(tr);
+    });
+}
 
-        const listaFiltrada = todasInscricoes.filter(i => {
-            let ok = true;
-            if (filtroTurma !== "TODAS" && i.turma !== filtroTurma) ok = false;
-            if (filtroMod !== "TODAS" && !(i.modalidades || []).includes(filtroMod)) ok = false;
-            return ok;
-        });
+/* ============================
+   10) TABELA ADMIN COMPLETA
+   ============================ */
 
-        if (listaFiltrada.length === 0) {
-            const tr = document.createElement("tr");
-            const td = document.createElement("td");
-            td.colSpan = 2;
-            td.textContent = "Nenhum inscrito encontrado com esses filtros.";
-            tr.appendChild(td);
-            corpo.appendChild(tr);
-            return;
-        }
+function renderizarTabelaAdmin() {
+    if (!isAdmin) return;
+    const corpo = document.querySelector("#tabelaAdmin tbody");
+    if (!corpo) return;
+    corpo.innerHTML = "";
 
-        listaFiltrada.forEach(i => {
-            const tr = document.createElement("tr");
-            const tdNome = document.createElement("td");
-            const tdTurma = document.createElement("td");
-
-            tdNome.textContent = i.nome;
-            tdTurma.textContent = i.turma;
-
-            tr.appendChild(tdNome);
-            tr.appendChild(tdTurma);
-            corpo.appendChild(tr);
-        });
+    if (todasInscricoes.length === 0) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 7;
+        td.textContent = "Ainda não há inscrições.";
+        tr.appendChild(td);
+        corpo.appendChild(tr);
+        return;
     }
 
-    // ============================
-    // 10) TABELA ADMIN COMPLETA
-    // ============================
+    todasInscricoes.forEach(function(i) {
+        const tr = document.createElement("tr");
 
-    function renderizarTabelaAdmin() {
-        if (!isAdmin) return;
-        const corpo = document.querySelector("#tabelaAdmin tbody");
-        corpo.innerHTML = "";
+        const tdNome = document.createElement("td");
+        const tdTurma = document.createElement("td");
+        const tdTurno = document.createElement("td");
+        const tdCamisa = document.createElement("td");
+        const tdMods = document.createElement("td");
+        const tdObs = document.createElement("td");
+        const tdData = document.createElement("td");
 
-        if (todasInscricoes.length === 0) {
-            const tr = document.createElement("tr");
-            const td = document.createElement("td");
-            td.colSpan = 7;
-            td.textContent = "Ainda não há inscrições.";
-            tr.appendChild(td);
-            corpo.appendChild(tr);
-            return;
+        tdNome.textContent = i.nome || "";
+        tdTurma.textContent = i.turma || "";
+        tdTurno.textContent = i.turno || "";
+        tdCamisa.textContent = i.camisaNumero || "";
+        tdMods.textContent = (i.modalidades || []).join(", ");
+        tdObs.textContent = i.observacoes || "";
+
+        if (i.timestamp && i.timestamp.toDate) {
+            const d = i.timestamp.toDate();
+            const dataStr = d.toLocaleDateString("pt-BR");
+            const horaStr = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+            tdData.textContent = dataStr + " " + horaStr;
+        } else {
+            tdData.textContent = "-";
         }
 
-        todasInscricoes.forEach(i => {
-            const tr = document.createElement("tr");
+        tr.appendChild(tdNome);
+        tr.appendChild(tdTurma);
+        tr.appendChild(tdTurno);
+        tr.appendChild(tdCamisa);
+        tr.appendChild(tdMods);
+        tr.appendChild(tdObs);
+        tr.appendChild(tdData);
 
-            const tdNome = document.createElement("td");
-            const tdTurma = document.createElement("td");
-            const tdTurno = document.createElement("td");
-            const tdCamisa = document.createElement("td");
-            const tdMods = document.createElement("td");
-            const tdObs = document.createElement("td");
-            const tdData = document.createElement("td");
+        corpo.appendChild(tr);
+    });
+}
 
-            tdNome.textContent = i.nome || "";
-            tdTurma.textContent = i.turma || "";
-            tdTurno.textContent = i.turno || "";
-            tdCamisa.textContent = i.camisaNumero || "";
-            tdMods.textContent = (i.modalidades || []).join(", ");
-            tdObs.textContent = i.observacoes || "";
+/* ============================
+   11) EXCEÇÕES DE NOME (ADMIN)
+   ============================ */
 
-            if (i.timestamp && i.timestamp.toDate) {
-                const d = i.timestamp.toDate();
-                const dataStr = d.toLocaleDateString("pt-BR");
-                const horaStr = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-                tdData.textContent = `${dataStr} ${horaStr}`;
-            } else {
-                tdData.textContent = "-";
-            }
+async function handleAdicionarExcecao() {
+    const input = document.getElementById("nomeExcecao");
+    const nomeOriginal = (input.value || "").trim();
+    if (!nomeOriginal) {
+        alert("Digite um nome para autorizar.");
+        return;
+    }
+    const nomeNorm = normalizarNome(nomeOriginal);
+    if (!nomeNorm) {
+        alert("Nome inválido.");
+        return;
+    }
 
-            tr.appendChild(tdNome);
-            tr.appendChild(tdTurma);
-            tr.appendChild(tdTurno);
-            tr.appendChild(tdCamisa);
-            tr.appendChild(tdMods);
-            tr.appendChild(tdObs);
-            tr.appendChild(tdData);
+    const jaTem = nomesExcecao.some(function(e) { return e.nomeNormalizado === nomeNorm; });
+    if (jaTem) {
+        alert("Esse nome já está autorizado como exceção.");
+        return;
+    }
 
-            corpo.appendChild(tr);
+    try {
+        await db.collection("nomesExcecao").add({
+            nomeOriginal: nomeOriginal,
+            nomeNormalizado: nomeNorm
         });
+        input.value = "";
+        alert("Nome autorizado com sucesso.");
+    } catch (error) {
+        console.error("Erro ao salvar exceção de nome:", error);
+        alert("Erro ao salvar exceção. Tente novamente.");
     }
+}
 
-    // ============================
-    // 11) EXCEÇÕES DE NOME (ADMIN)
-    // ============================
-
-    async function handleAdicionarExcecao() {
-        const input = document.getElementById("nomeExcecao");
-        const nomeOriginal = input.value.trim();
-        if (!nomeOriginal) {
-            alert("Digite um nome para autorizar.");
-            return;
-        }
-        const nomeNorm = normalizarNome(nomeOriginal);
-        if (!nomeNorm) {
-            alert("Nome inválido.");
-            return;
-        }
-
-        // Evita duplicar exceção
-        const jaTem = nomesExcecao.some(e => e.nomeNormalizado === nomeNorm);
-        if (jaTem) {
-            alert("Esse nome já está autorizado como exceção.");
-            return;
-        }
-
-        try {
-            await db.collection("nomesExcecao").add({
-                nomeOriginal,
-                nomeNormalizado: nomeNorm
-            });
-            input.value = "";
-            alert("Nome autorizado com sucesso.");
-        } catch (error) {
-            console.error("Erro ao salvar exceção de nome:", error);
-            alert("Erro ao salvar exceção. Tente novamente.");
-        }
+function renderizarListaExcecoes() {
+    const ul = document.getElementById("listaExcecoes");
+    if (!ul) return;
+    ul.innerHTML = "";
+    if (nomesExcecao.length === 0) {
+        const li = document.createElement("li");
+        li.textContent = "Nenhum nome com menos de 4 nomes autorizado ainda.";
+        ul.appendChild(li);
+        return;
     }
+    nomesExcecao.forEach(function(e) {
+        const li = document.createElement("li");
+        li.textContent = e.nomeOriginal;
+        ul.appendChild(li);
+    });
+}
 
-    function renderizarListaExcecoes() {
-        const ul = document.getElementById("listaExcecoes");
-        ul.innerHTML = "";
-        if (nomesExcecao.length === 0) {
-            const li = document.createElement("li");
-            li.textContent = "Nenhum nome com menos de 4 nomes autorizado ainda.";
-            ul.appendChild(li);
-            return;
-        }
-        nomesExcecao.forEach(e => {
-            const li = document.createElement("li");
-            li.textContent = e.nomeOriginal;
-            ul.appendChild(li);
-        });
+/* ============================
+   12) CANCELAR INSCRIÇÃO (ADMIN)
+   ============================ */
+
+function atualizarSelectCancelar() {
+    const sel = document.getElementById("selectCancelar");
+    if (!sel) return;
+    const valorAnterior = sel.value;
+    sel.innerHTML = "";
+    const optPadrao = document.createElement("option");
+    optPadrao.value = "";
+    optPadrao.textContent = "Selecione um inscrito...";
+    sel.appendChild(optPadrao);
+
+    todasInscricoes.forEach(function(i) {
+        const opt = document.createElement("option");
+        const mods = (i.modalidades || []).join(", ");
+        opt.value = i.id;
+        opt.textContent = i.nome + " — " + i.turma + (mods ? " — " + mods : "");
+        sel.appendChild(opt);
+    });
+
+    if (valorAnterior) {
+        sel.value = valorAnterior;
     }
+}
+
+async function handleCancelarInscricao() {
+    if (!isAdmin) {
+        alert("Apenas a coordenação (área administrativa) pode cancelar inscrições.");
+        return;
+    }
+    const sel = document.getElementById("selectCancelar");
+    const id = sel.value;
+    if (!id) {
+        alert("Selecione um inscrito para cancelar.");
+        return;
+    }
+    const inscrito = todasInscricoes.find(function(i) { return i.id === id; });
+    if (!inscrito) {
+        alert("Inscrição não encontrada. Atualize a página.");
+        return;
+    }
+    const confirmacao = confirm("Tem certeza que deseja cancelar a inscrição de \"" + inscrito.nome + "\" da turma " + inscrito.turma + "?");
+    if (!confirmacao) return;
+
+    try {
+        await db.collection("inscricoes").doc(id).delete();
+        alert("Inscrição cancelada com sucesso. As vagas foram liberadas.");
+    } catch (error) {
+        console.error("Erro ao cancelar inscrição:", error);
+        alert("Erro ao cancelar inscrição. Tente novamente.");
+    }
+}
+
+/* ============================
+   13) ALTERNAR FORMULÁRIO / INSCRITOS
+   ============================ */
+
+function alternarPainelInscritos() {
+    const secForm = document.getElementById("secInscricao");
+    const secInscritos = document.getElementById("secInscritos");
+    const btn = document.getElementById("btnToggleInscritos");
+
+    mostrandoInscritos = !mostrandoInscritos;
+    if (mostrandoInscritos) {
+        secForm.style.display = "none";
+        secInscritos.style.display = "block";
+        btn.textContent = "⬅ Voltar para inscrição";
+        secInscritos.scrollIntoView({ behavior: "smooth" });
+    } else {
+        secForm.style.display = "block";
+        secInscritos.style.display = "none";
+        btn.textContent = "👀 Ver inscritos";
+        secForm.scrollIntoView({ behavior: "smooth" });
+    }
+}
 </script>
 </body>
 </html>
