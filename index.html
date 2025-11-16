@@ -84,22 +84,12 @@
         header {
             background: linear-gradient(90deg, var(--azul) 0%, #007bff 100%);
             color: #fff;
-            padding: 12px 16px;
+            padding: 16px 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             flex-wrap: wrap;
             gap: 10px;
-        }
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .header-titles {
-            display: flex;
-            flex-direction: column;
         }
         header h1 {
             margin: 0;
@@ -109,23 +99,11 @@
             font-size: 0.85rem;
             opacity: 0.9;
         }
-        .header-logos {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .header-logos img {
-            max-height: 40px;
-            border-radius: 6px;
-            background: #fff;
-            padding: 2px;
-        }
         .header-right {
             display: flex;
             align-items: center;
             gap: 8px;
             flex-wrap: wrap;
-            justify-content: flex-end;
         }
         button,
         select,
@@ -200,9 +178,6 @@
             margin-bottom: 3px;
         }
         input[type="text"],
-        input[type="number"],
-        input[type="date"],
-        input[type="time"],
         select,
         textarea {
             width: 100%;
@@ -331,9 +306,13 @@
             color: var(--azul);
         }
 
-        /* Painéis escondidos */
-        #secInscritos,
-        #secJogosPublico {
+        /* Painel de inscritos começa escondido */
+        #secInscritos {
+            display: none;
+        }
+
+        /* Painel de jogos começa escondido */
+        #secJogos {
             display: none;
         }
 
@@ -342,13 +321,6 @@
             width: 100%;
             max-width: 300px;
             margin-top: 8px;
-        }
-
-        /* Resumo geral */
-        #resumoGeral span {
-            display: inline-block;
-            margin-right: 10px;
-            font-size: 0.85rem;
         }
     </style>
 </head>
@@ -366,20 +338,15 @@
 </div>
 
 <header>
-    <div class="header-left">
-        <div class="header-logos">
-            <img id="logoEscola" alt="Logo da escola" style="display:none;">
-            <img id="logoEvento" alt="Logo do evento" style="display:none;">
-        </div>
-        <div class="header-titles">
-            <h1 id="tituloEvento">Inscrições Movimenta Odisseia</h1>
-            <span class="subtitulo" id="subtituloEvento">Inscrições para o Movimenta Odisseia</span>
-        </div>
+    <div>
+        <h1>Inscrições Movimenta Odisseia</h1>
+        <span class="subtitulo">Inscrições para o Movimenta Odisseia</span>
     </div>
     <div class="header-right">
         <button id="btnToggleInscritos" class="btn btn-primaria">
             👀 Ver inscritos
         </button>
+        <!-- NOVO BOTÃO VER JOGOS -->
         <button id="btnToggleJogos" class="btn btn-primaria">
             📅 Ver jogos
         </button>
@@ -393,7 +360,7 @@
     <!-- FORMULÁRIO DE INSCRIÇÃO -->
     <section class="card" id="secInscricao">
         <h2>Formulário de inscrição</h2>
-        <small>Preencha seus dados e escolha até <strong>2 modalidades</strong> (valor configurável no ADM).</small>
+        <small>Preencha seus dados e escolha até <strong>2 modalidades</strong>.</small>
 
         <div id="msgForm"></div>
 
@@ -443,11 +410,11 @@
             </div>
 
             <div style="margin-top:14px;">
-                <label>Modalidades (máximo configurável por aluno)</label>
+                <label>Modalidades (máximo 2 por aluno)</label>
                 <p class="alerta">
-                    ✅ FUTSAL: 8 pessoas por turma (configurável).<br>
-                    ✅ DOMINÓ / FUTMESA / XADREZ / TÊNIS DE MESA / VOLEI: limite por turma configurável.<br>
-                    ✅ QUEIMADA MISTA: até 5 meninas e 5 meninos por turma (configurável).
+                    ✅ FUTSAL: 8 pessoas por turma.<br>
+                    ✅ DOMINÓ / FUTMESA / XADREZ / TÊNIS DE MESA / VOLEI: 2, 2, 2, 2 e 6 pessoas por turma (conforme regra).<br>
+                    ✅ QUEIMADA MISTA: até 5 meninas e 5 meninos por turma.
                 </p>
                 <div class="modalidades-lista" id="modalidadesContainer">
                     <!-- preenchido via JS -->
@@ -455,7 +422,7 @@
             </div>
 
             <div style="margin-top:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                <span class="pill-info" id="msgPrazo">As inscrições estão abertas até a data configurada no ADM.</span>
+                <span class="pill-info">As inscrições são atualizadas em tempo real. Use "Ver inscritos" para ver o geral.</span>
                 <button type="submit" class="btn btn-primaria">
                     ✅ Enviar inscrição
                 </button>
@@ -498,50 +465,34 @@
         </table>
     </section>
 
-    <!-- TABELA DE JOGOS (PÚBLICO) -->
-    <section class="card" id="secJogosPublico">
+    <!-- NOVA SEÇÃO: TABELA DE JOGOS (VISUALIZAÇÃO ALUNO) -->
+    <section class="card" id="secJogos">
         <h2>Tabela de jogos</h2>
-        <small>Visualização para os alunos: datas, horários, quadras, times e resultados.</small>
+        <small>Selecione o turno para ver os jogos do Movimenta Odisseia.</small>
 
         <div class="filtros">
             <div>
-                <label for="filtroJogoModalidade">Modalidade</label>
-                <select id="filtroJogoModalidade">
-                    <option value="TODAS">Todas</option>
-                </select>
-            </div>
-            <div>
-                <label for="filtroJogoDia">Dia</label>
-                <input type="date" id="filtroJogoDia" />
-            </div>
-            <div>
-                <label for="filtroJogoStatus">Status</label>
-                <select id="filtroJogoStatus">
-                    <option value="TODOS">Todos</option>
-                    <option value="Agendado">Agendado</option>
-                    <option value="Em andamento">Em andamento</option>
-                    <option value="Finalizado">Finalizado</option>
-                    <option value="Adiado">Adiado</option>
+                <label for="jogosTurno">Turno</label>
+                <select id="jogosTurno">
+                    <option value="">Selecione...</option>
+                    <option value="Matutino">Matutino</option>
+                    <option value="Vespertino">Vespertino</option>
+                    <option value="Noturno">Noturno</option>
                 </select>
             </div>
         </div>
 
-        <table id="tabelaJogosPublico">
+        <table id="tabelaJogos">
             <thead>
                 <tr>
-                    <th>Dia</th>
+                    <th>Data</th>
                     <th>Horário</th>
-                    <th>Quadra</th>
-                    <th>Modalidade</th>
-                    <th>Time A</th>
-                    <th>Time B</th>
-                    <th>Árbitro</th>
-                    <th>Status</th>
-                    <th>Placar</th>
+                    <th>Turma X Turma</th>
+                    <th>Local</th>
                 </tr>
             </thead>
             <tbody>
-                <!-- via JS -->
+                <!-- jogos via JS -->
             </tbody>
         </table>
     </section>
@@ -553,98 +504,11 @@
         <button id="btnFecharAdmin" class="btn btn-primaria" style="margin-top:8px; margin-bottom:6px;">
             ⬅ Fechar área administrativa
         </button>
-        <small>Aqui aparecem todas as inscrições, configurações, relatórios e tabela de jogos.</small>
-
-        <!-- CONFIGURAÇÕES DO EVENTO -->
-        <div class="admin-actions">
-            <h3>⚙️ Configurações do evento</h3>
-            <p style="font-size:0.84rem; margin:4px 0 8px;">
-                Ajuste nome, prazos e limites sem mexer no código. Essas configurações são salvas no Firebase.
-            </p>
-            <div class="grid-2">
-                <div>
-                    <label for="cfgNomeEvento">Nome do evento</label>
-                    <input type="text" id="cfgNomeEvento" />
-                </div>
-                <div>
-                    <label for="cfgSubtitulo">Subtítulo (descrição)</label>
-                    <input type="text" id="cfgSubtitulo" />
-                </div>
-            </div>
-            <div class="grid-2" style="margin-top:8px;">
-                <div>
-                    <label for="cfgDataLimiteInscricao">Data limite de inscrição</label>
-                    <input type="date" id="cfgDataLimiteInscricao" />
-                </div>
-                <div>
-                    <label for="cfgDataTravaEdicao">Data em que o sistema trava (sem edição)</label>
-                    <input type="date" id="cfgDataTravaEdicao" />
-                </div>
-            </div>
-            <div class="grid-2" style="margin-top:8px;">
-                <div>
-                    <label for="cfgMaxModalidades">Máx. modalidades por aluno</label>
-                    <input type="number" id="cfgMaxModalidades" min="1" />
-                </div>
-                <div>
-                    <label for="cfgLimiteQueimadaSexo">Queimada: limite por sexo (meninos/meninas)</label>
-                    <input type="number" id="cfgLimiteQueimadaSexo" min="1" />
-                </div>
-            </div>
-            <div class="grid-2" style="margin-top:8px;">
-                <div>
-                    <label for="cfgLogoEscola">Logo da escola (URL da imagem)</label>
-                    <input type="text" id="cfgLogoEscola" />
-                </div>
-                <div>
-                    <label for="cfgLogoEvento">Logo do evento (URL da imagem)</label>
-                    <input type="text" id="cfgLogoEvento" />
-                </div>
-            </div>
-            <div style="margin-top:8px;">
-                <label>Limite de vagas por modalidade (por turma)</label>
-                <div class="grid-2" id="cfgLimitesModalidades">
-                    <!-- inputs gerados via JS -->
-                </div>
-            </div>
-            <button id="btnSalvarConfig" class="btn btn-primaria" style="margin-top:8px;">
-                💾 Salvar configurações
-            </button>
-        </div>
-
-        <!-- RELATÓRIOS E EXPORTAÇÃO -->
-        <div class="admin-actions">
-            <h3>📊 Relatórios e exportação</h3>
-            <p style="font-size:0.84rem; margin:4px 0 8px;">
-                Gere visão geral do evento e exporte todos os dados para Excel/CSV.
-            </p>
-            <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
-                <button id="btnAtualizarRelatorios" class="btn btn-primaria">🔄 Atualizar relatórios</button>
-                <button id="btnExportarCsv" class="btn btn-primaria">📥 Baixar todos os dados (CSV)</button>
-            </div>
-            <div id="resumoGeral">
-                <!-- preenchido via JS -->
-            </div>
-            <h4 style="margin-top:10px; font-size:0.9rem; color:var(--azul);">Relatório por modalidade / turma (M/F)</h4>
-            <table id="tabelaResumoModalidades">
-                <thead>
-                    <tr>
-                        <th>Modalidade</th>
-                        <th>Turma</th>
-                        <th>Total</th>
-                        <th>Meninos</th>
-                        <th>Meninas</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- via JS -->
-                </tbody>
-            </table>
-        </div>
+        <small>Aqui aparecem todas as inscrições com detalhes e relatórios para chaveamento.</small>
 
         <!-- BUSCA DE ALUNO -->
         <div class="admin-actions">
-            <h3>🔎 Buscar aluno</h3>
+            <h3>Buscar aluno</h3>
             <p style="font-size:0.84rem; margin:4px 0 8px;">
                 Digite o nome (ou parte do nome) para localizar na tabela de inscrições.
             </p>
@@ -653,7 +517,7 @@
 
         <!-- BLOCO DE EXCEÇÕES DE NOME -->
         <div class="admin-actions">
-            <h3>✅ Autorizar nome com 2 nomes</h3>
+            <h3>Autorizar nome com 2 nomes</h3>
             <p style="font-size:0.84rem; margin:4px 0 8px;">
                 Nomes com <strong>3 ou mais palavras</strong> entram normalmente.<br>
                 Se um aluno tiver apenas <strong>2 nomes</strong> e você quiser liberar, digite o nome exatamente como ele será escrito no formulário e clique em <em>"Autorizar"</em>.
@@ -667,7 +531,7 @@
 
         <!-- BLOCO DE CANCELAMENTO DE INSCRIÇÃO -->
         <div class="admin-actions">
-            <h3>📝 Cancelar inscrição</h3>
+            <h3>Cancelar inscrição</h3>
             <p style="font-size:0.84rem; margin:4px 0 8px;">
                 Selecione um aluno para cancelar a inscrição. Isso remove o registro do banco e libera as vagas das modalidades daquela turma.
             </p>
@@ -679,9 +543,9 @@
             </div>
         </div>
 
-        <!-- RELATÓRIO POR MODALIDADE / TURMA (DETALHADO) -->
+        <!-- RELATÓRIO POR MODALIDADE / TURMA (COM BOTÃO) -->
         <div class="admin-actions">
-            <h3>📄 Relatório detalhado por modalidade / turma</h3>
+            <h3>Relatório por modalidade / turma</h3>
             <p style="font-size:0.84rem; margin:4px 0 8px;">
                 Selecione a turma e a modalidade, clique em <strong>Relatório</strong> e depois em <strong>Imprimir relatório</strong> para usar no chaveamento.
             </p>
@@ -690,12 +554,14 @@
                     <label for="relTurma">Turma</label>
                     <select id="relTurma">
                         <option value="">Selecione...</option>
+                        <!-- turmas via JS -->
                     </select>
                 </div>
                 <div>
                     <label for="relModalidade">Modalidade</label>
                     <select id="relModalidade">
                         <option value="">Selecione...</option>
+                        <!-- modalidades via JS -->
                     </select>
                 </div>
                 <div style="align-self:flex-end;">
@@ -727,109 +593,66 @@
             </button>
         </div>
 
-        <!-- TABELA DE JOGOS E ARBITRAGEM (ADMIN) -->
+        <!-- NOVO BLOCO: CRIAR / EDITAR TABELA DE JOGOS -->
         <div class="admin-actions">
-            <h3>🗓️ Tabela de jogos e arbitragem</h3>
+            <h3>Criar / editar tabela de jogos</h3>
             <p style="font-size:0.84rem; margin:4px 0 8px;">
-                Cadastre e organize os jogos: dia, horário, quadra, times, árbitro, status e placar final.
+                Selecione o turno, defina <strong>Turma X Turma</strong>, data, horário e local. Clique em <strong>Salvar jogo</strong> para montar a tabela.
             </p>
             <div class="grid-2">
                 <div>
-                    <label for="jogoDia">Dia</label>
-                    <input type="date" id="jogoDia" />
+                    <label for="jogoTurno">Turno</label>
+                    <select id="jogoTurno">
+                        <option value="">Selecione...</option>
+                        <option value="Matutino">Matutino</option>
+                        <option value="Vespertino">Vespertino</option>
+                        <option value="Noturno">Noturno</option>
+                    </select>
+
+                    <label for="jogoTurma1" style="margin-top:8px;">Turma 1</label>
+                    <select id="jogoTurma1">
+                        <option value="">Selecione o turno...</option>
+                    </select>
+
+                    <label for="jogoTurma2" style="margin-top:8px;">Turma 2</label>
+                    <select id="jogoTurma2">
+                        <option value="">Selecione o turno...</option>
+                    </select>
                 </div>
                 <div>
-                    <label for="jogoHora">Horário</label>
+                    <label for="jogoData">Data</label>
+                    <input type="date" id="jogoData" />
+
+                    <label for="jogoHora" style="margin-top:8px;">Horário</label>
                     <input type="time" id="jogoHora" />
-                </div>
-            </div>
-            <div class="grid-2" style="margin-top:8px;">
-                <div>
-                    <label for="jogoQuadra">Quadra / Local</label>
-                    <input type="text" id="jogoQuadra" placeholder="Ex: Quadra coberta" />
-                </div>
-                <div>
-                    <label for="jogoModalidade">Modalidade</label>
-                    <select id="jogoModalidade">
-                        <option value="">Selecione...</option>
-                    </select>
-                </div>
-            </div>
-            <div class="grid-2" style="margin-top:8px;">
-                <div>
-                    <label for="jogoTurmaA">Time A (turma)</label>
-                    <select id="jogoTurmaA">
-                        <option value="">Selecione...</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="jogoTurmaB">Time B (turma)</label>
-                    <select id="jogoTurmaB">
-                        <option value="">Selecione...</option>
-                    </select>
-                </div>
-            </div>
-            <div class="grid-2" style="margin-top:8px;">
-                <div>
-                    <label for="jogoArbitro">Professor / Árbitro</label>
-                    <input type="text" id="jogoArbitro" placeholder="Ex: Prof. João" />
-                </div>
-                <div>
-                    <label for="jogoStatus">Status do jogo</label>
-                    <select id="jogoStatus">
-                        <option value="Agendado">Agendado</option>
-                        <option value="Em andamento">Em andamento</option>
-                        <option value="Finalizado">Finalizado</option>
-                        <option value="Adiado">Adiado</option>
-                    </select>
-                </div>
-            </div>
-            <div class="grid-2" style="margin-top:8px;">
-                <div>
-                    <label for="jogoPlacarA">Placar Time A</label>
-                    <input type="number" id="jogoPlacarA" min="0" />
-                </div>
-                <div>
-                    <label for="jogoPlacarB">Placar Time B</label>
-                    <input type="number" id="jogoPlacarB" min="0" />
-                </div>
-            </div>
 
-            <div style="margin-top:8px;">
-                <label for="jogoSelecionado">Editar jogo existente (opcional)</label>
-                <select id="jogoSelecionado" style="width:100%; max-width:100%;">
-                    <option value="">Novo jogo / selecione para editar...</option>
-                </select>
+                    <label for="jogoLocal" style="margin-top:8px;">Local</label>
+                    <input type="text" id="jogoLocal" placeholder="Ex: Quadra coberta, Campo, etc." />
+                </div>
             </div>
-
             <div style="margin-top:8px; display:flex; flex-wrap:wrap; gap:8px;">
-                <button id="btnSalvarJogo" class="btn btn-primaria">💾 Salvar jogo</button>
-                <button id="btnLimparJogo" class="btn btn-primaria">🧹 Limpar formulário</button>
+                <button id="btnSalvarJogo" class="btn btn-primaria" type="button">💾 Salvar jogo</button>
+                <button id="btnLimparJogo" class="btn btn-primaria" type="button">🧹 Limpar formulário</button>
             </div>
 
-            <table id="tabelaJogosAdmin">
+            <table id="tabelaJogosAdmin" style="margin-top:10px;">
                 <thead>
                     <tr>
-                        <th>Dia</th>
-                        <th>Hora</th>
-                        <th>Quadra</th>
-                        <th>Modalidade</th>
-                        <th>Time A</th>
-                        <th>Time B</th>
-                        <th>Árbitro</th>
-                        <th>Status</th>
-                        <th>Placar</th>
+                        <th>Turno</th>
+                        <th>Data</th>
+                        <th>Horário</th>
+                        <th>Turma X Turma</th>
+                        <th>Local</th>
+                        <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- via JS -->
+                    <!-- jogos admin via JS -->
                 </tbody>
             </table>
         </div>
 
-        <!-- TABELA COMPLETA DE INSCRIÇÕES -->
         <div style="margin-top:14px;">
-            <h3 style="font-size:0.95rem; color:var(--azul); margin-bottom:4px;">📋 Todas as inscrições</h3>
             <table id="tabelaAdmin">
                 <thead>
                     <tr>
@@ -908,7 +731,7 @@ const TURMAS_NOTURNO = [
     "3ºA","3ºB","3ºC"
 ];
 
-const LIMITE_MODALIDADE_DEFAULT = {
+const LIMITE_MODALIDADE_TURMA = {
     "FUTSAL": 8,
     "DOMINÓ": 2,
     "FUTMESA": 2,
@@ -917,36 +740,32 @@ const LIMITE_MODALIDADE_DEFAULT = {
     "VOLEI": 6
 };
 
-const DEFAULT_CONFIG = {
-    nomeEvento: "Inscrições Movimenta Odisseia",
-    subtituloEvento: "Inscrições para o Movimenta Odisseia",
-    dataLimiteInscricao: "2025-12-08", // AAAA-MM-DD
-    dataTravaEdicao: "2025-12-13",
-    maxModalidadesPorAluno: 2,
-    limiteQueimadaPorSexo: 5,
-    limiteQueimadaTotal: 10,
-    limitePorModalidade: LIMITE_MODALIDADE_DEFAULT,
-    logoEscolaUrl: "",
-    logoEventoUrl: ""
-};
+const LIMITE_QUEIMADA_TOTAL = 10; // 5 meninas + 5 meninos
+const LIMITE_QUEIMADA_POR_SEXO = 5;
 
-const ADMIN_PASSWORD = "movimenta2025";
+const LIMITE_MODALIDADES_POR_ALUNO = 2;
+const ADMIN_PASSWORD = "52090949";
+
+/* ============= 2.1) DATA DE EXPIRAÇÃO DAS INSCRIÇÕES ============= */
+/* Inscrições válidas até 08/12/2025 (inclusive).
+   A partir de 09/12/2025 00:00 o formulário é bloqueado. */
+const DATA_EXPIRACAO = new Date(2025, 11, 9, 0, 0, 0); // 09/12/2025 00:00
 
 /* ============= 3) ESTADO ============= */
-
-let configEvento = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
 
 let countsPorTurmaModalidade = {};
 let countsQueimadaGenero = {};
 let todasInscricoes = [];
-let todasPartidas = [];
 let isAdmin = false;
 let adminAberto = false;
 let mostrandoInscritos = false;
-let mostrandoJogos = false;
+let mostrandoJogos = false; // novo estado
 let nomesExcecao = [];
 let emailAtual = null;
 let inscricoesEncerradas = false;
+
+// ESTADO DOS JOGOS
+let jogos = [];
 let jogoEditandoId = null;
 
 /* ============= 4) AUXILIARES ============= */
@@ -983,144 +802,18 @@ function validarEmail(email) {
     return email.includes("@") && email.includes(".");
 }
 
-function getLimiteModalidade(mod) {
-    if (configEvento && configEvento.limitePorModalidade && configEvento.limitePorModalidade[mod] != null) {
-        return configEvento.limitePorModalidade[mod];
-    }
-    return LIMITE_MODALIDADE_DEFAULT[mod] || 0;
-}
-
-function getDataLimiteDate() {
-    if (!configEvento || !configEvento.dataLimiteInscricao) return null;
-    const partes = configEvento.dataLimiteInscricao.split("-");
-    if (partes.length !== 3) return null;
-    const ano = parseInt(partes[0], 10);
-    const mes = parseInt(partes[1], 10) - 1;
-    const dia = parseInt(partes[2], 10);
-    // válido até o fim do dia configurado => travamos a partir do dia seguinte
-    return new Date(ano, mes, dia + 1, 0, 0, 0);
-}
-
-function getDataTravaEdicaoDate() {
-    if (!configEvento || !configEvento.dataTravaEdicao) return null;
-    const partes = configEvento.dataTravaEdicao.split("-");
-    if (partes.length !== 3) return null;
-    const ano = parseInt(partes[0], 10);
-    const mes = parseInt(partes[1], 10) - 1;
-    const dia = parseInt(partes[2], 10);
-    return new Date(ano, mes, dia + 1, 0, 0, 0);
-}
-
-/* Verifica se inscrições e edição já expiraram */
+/* Verifica se as inscrições já expiraram e, se sim, bloqueia o formulário */
 function verificarExpiracao() {
     const agora = new Date();
-    const limiteInscricao = getDataLimiteDate();
-    const travaEdicao = getDataTravaEdicaoDate();
-
-    inscricoesEncerradas = limiteInscricao ? (agora >= limiteInscricao) : false;
-
+    inscricoesEncerradas = agora >= DATA_EXPIRACAO;
     if (inscricoesEncerradas) {
         const form = document.getElementById("formInscricao");
         if (form) {
             const campos = form.querySelectorAll("input, select, textarea, button[type='submit']");
             campos.forEach(el => el.disabled = true);
         }
-        mostrarMensagemForm(
-            `As inscrições foram encerradas. Prazo final: ${configEvento.dataLimiteInscricao || "configurar no ADM"}.`,
-            false
-        );
-        const msgPrazo = document.getElementById("msgPrazo");
-        if (msgPrazo) {
-            msgPrazo.textContent = "Inscrições ENCERRADAS.";
-        }
-    } else {
-        const msgPrazo = document.getElementById("msgPrazo");
-        if (msgPrazo) {
-            if (configEvento.dataLimiteInscricao) {
-                const dataBR = configEvento.dataLimiteInscricao.split("-").reverse().join("/");
-                msgPrazo.textContent = `Inscrições abertas até ${dataBR}.`;
-            } else {
-                msgPrazo.textContent = "As inscrições estão abertas (defina uma data limite no ADM).";
-            }
-        }
+        mostrarMensagemForm("As inscrições foram encerradas. Prazo final: 08/12/2025.", false);
     }
-
-    // trava edição após dataTravaEdicao (só impede mudança, não a visualização)
-    const bloqueioEdicao = travaEdicao ? (agora >= travaEdicao) : false;
-    if (bloqueioEdicao && isAdmin) {
-        alert("Atenção: data de trava de edição alcançada. Evite alterar configurações, inscrições ou jogos.");
-    }
-}
-
-/* Aplica config na interface (título, subtítulo, logos, inputs) */
-function applyConfigToUI() {
-    document.getElementById("tituloEvento").textContent = configEvento.nomeEvento || DEFAULT_CONFIG.nomeEvento;
-    document.getElementById("subtituloEvento").textContent = configEvento.subtituloEvento || DEFAULT_CONFIG.subtituloEvento;
-
-    const logoEscolaImg = document.getElementById("logoEscola");
-    const logoEventoImg = document.getElementById("logoEvento");
-    if (configEvento.logoEscolaUrl) {
-        logoEscolaImg.src = configEvento.logoEscolaUrl;
-        logoEscolaImg.style.display = "block";
-    } else {
-        logoEscolaImg.style.display = "none";
-    }
-    if (configEvento.logoEventoUrl) {
-        logoEventoImg.src = configEvento.logoEventoUrl;
-        logoEventoImg.style.display = "block";
-    } else {
-        logoEventoImg.style.display = "none";
-    }
-
-    // Form de config
-    document.getElementById("cfgNomeEvento").value = configEvento.nomeEvento || "";
-    document.getElementById("cfgSubtitulo").value = configEvento.subtituloEvento || "";
-    document.getElementById("cfgDataLimiteInscricao").value = configEvento.dataLimiteInscricao || "";
-    document.getElementById("cfgDataTravaEdicao").value = configEvento.dataTravaEdicao || "";
-    document.getElementById("cfgMaxModalidades").value = configEvento.maxModalidadesPorAluno || 2;
-    document.getElementById("cfgLimiteQueimadaSexo").value = configEvento.limiteQueimadaPorSexo || 5;
-    document.getElementById("cfgLogoEscola").value = configEvento.logoEscolaUrl || "";
-    document.getElementById("cfgLogoEvento").value = configEvento.logoEventoUrl || "";
-
-    // Inputs dos limites por modalidade
-    const limitesDiv = document.getElementById("cfgLimitesModalidades");
-    limitesDiv.innerHTML = "";
-    MODALIDADES.forEach(mod => {
-        const wrap = document.createElement("div");
-        const lab = document.createElement("label");
-        lab.textContent = mod;
-        const inp = document.createElement("input");
-        inp.type = "number";
-        inp.min = "1";
-        inp.id = "cfgLimite_" + mod.replace(/\s/g, "_");
-        inp.value = getLimiteModalidade(mod) || "";
-        wrap.appendChild(lab);
-        wrap.appendChild(inp);
-        limitesDiv.appendChild(wrap);
-    });
-
-    verificarExpiracao();
-}
-
-/* Carrega config do Firebase (ou cria padrão) */
-function loadConfigEvento() {
-    db.collection("config").doc("evento").get()
-        .then(doc => {
-            if (doc.exists) {
-                const data = doc.data();
-                configEvento = Object.assign({}, DEFAULT_CONFIG, data);
-            } else {
-                configEvento = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-                db.collection("config").doc("evento").set(configEvento);
-            }
-            applyConfigToUI();
-            atualizarDisponibilidadeModalidades();
-        })
-        .catch(err => {
-            console.error("Erro ao carregar config do evento:", err);
-            configEvento = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-            applyConfigToUI();
-        });
 }
 
 /* ============= 5) INICIALIZAÇÃO ============= */
@@ -1134,14 +827,21 @@ function initInterclasse() {
     const modalidadesContainer = document.getElementById("modalidadesContainer");
     const relTurma = document.getElementById("relTurma");
     const relModalidade = document.getElementById("relModalidade");
-    const filtroJogoModalidade = document.getElementById("filtroJogoModalidade");
+
+    // elementos dos jogos (público)
+    const jogosTurnoSelect = document.getElementById("jogosTurno");
+
+    // elementos dos jogos (admin)
+    const jogoTurno = document.getElementById("jogoTurno");
+    const jogoTurma1 = document.getElementById("jogoTurma1");
+    const jogoTurma2 = document.getElementById("jogoTurma2");
 
     if (!selectTurma || !selectTurno || !filtroTurma || !filtroModalidade || !modalidadesContainer) {
         console.error("Erro ao carregar elementos principais. Verifique o HTML.");
         return;
     }
 
-    // Overlay de e-mail (sempre pede)
+    // Overlay de e-mail (sempre pede, tanto no PC quanto no celular)
     const overlay = document.getElementById("emailOverlay");
     const emailInput = document.getElementById("emailAluno");
     const btnEntrarEmail = document.getElementById("btnEntrarEmail");
@@ -1166,6 +866,9 @@ function initInterclasse() {
         }
     });
 
+    // Verifica expiração logo na inicialização
+    verificarExpiracao();
+
     selectTurma.disabled = true;
 
     TURMAS.forEach(function(t) {
@@ -1180,11 +883,6 @@ function initInterclasse() {
         opt.value = m;
         opt.textContent = m;
         filtroModalidade.appendChild(opt);
-
-        const optJ = document.createElement("option");
-        optJ.value = m;
-        optJ.textContent = m;
-        filtroJogoModalidade.appendChild(optJ);
     });
 
     if (relTurma) {
@@ -1204,7 +902,6 @@ function initInterclasse() {
         });
     }
 
-    // Modalidades do formulário
     MODALIDADES.forEach(function(mod) {
         const div = document.createElement("div");
         div.className = "modalidade-item";
@@ -1235,10 +932,9 @@ function initInterclasse() {
     modalidadesContainer.addEventListener("change", function(e) {
         if (e.target.classList.contains("chkModalidade")) {
             const selecionados = document.querySelectorAll(".chkModalidade:checked");
-            const maxMods = configEvento.maxModalidadesPorAluno || 2;
-            if (selecionados.length > maxMods) {
+            if (selecionados.length > LIMITE_MODALIDADES_POR_ALUNO) {
                 e.target.checked = false;
-                alert("Você só pode escolher até " + maxMods + " modalidades.");
+                alert("Você só pode escolher até " + LIMITE_MODALIDADES_POR_ALUNO + " modalidades.");
             }
         }
     });
@@ -1272,12 +968,6 @@ function initInterclasse() {
     filtroTurma.addEventListener("change", renderizarTabelaPublica);
     filtroModalidade.addEventListener("change", renderizarTabelaPublica);
 
-    // Filtros jogos público
-    document.getElementById("filtroJogoModalidade").addEventListener("change", renderizarTabelaJogosPublico);
-    document.getElementById("filtroJogoDia").addEventListener("change", renderizarTabelaJogosPublico);
-    document.getElementById("filtroJogoStatus").addEventListener("change", renderizarTabelaJogosPublico);
-
-    // Botões topo
     document.getElementById("btnToggleInscritos").addEventListener("click", alternarPainelInscritos);
     document.getElementById("btnToggleJogos").addEventListener("click", alternarPainelJogos);
 
@@ -1297,61 +987,32 @@ function initInterclasse() {
 
     document.getElementById("btnFecharAdmin").addEventListener("click", fecharAdmin);
 
-    // Form inscrição
     document.getElementById("formInscricao").addEventListener("submit", handleSubmitInscricao);
-
-    // Config
-    document.getElementById("btnSalvarConfig").addEventListener("click", salvarConfigEvento);
-
-    // Exceções de nome
     document.getElementById("btnAdicionarExcecao").addEventListener("click", handleAdicionarExcecao);
-
-    // Cancelar inscrição
     document.getElementById("btnCancelarInscricao").addEventListener("click", handleCancelarInscricao);
-
-    // Busca admin
     document.getElementById("adminSearch").addEventListener("input", filtrarTabelaAdminPorNome);
-
-    // Relatório detalhado + impressão
-    document.getElementById("btnGerarRelatorio").addEventListener("click", gerarRelatorioDetalhado);
+    document.getElementById("btnGerarRelatorio").addEventListener("click", gerarRelatorio);
     document.getElementById("btnImprimirRelatorio").addEventListener("click", imprimirRelatorio);
 
-    // Relatórios gerais + exportação
-    document.getElementById("btnAtualizarRelatorios").addEventListener("click", gerarRelatoriosGerais);
-    document.getElementById("btnExportarCsv").addEventListener("click", exportarCsvInscricoes);
-
-    // Jogos (admin)
-    const jogoModSel = document.getElementById("jogoModalidade");
-    MODALIDADES.forEach(m => {
-        const opt = document.createElement("option");
-        opt.value = m;
-        opt.textContent = m;
-        jogoModSel.appendChild(opt);
-    });
-    const jogoTurmaA = document.getElementById("jogoTurmaA");
-    const jogoTurmaB = document.getElementById("jogoTurmaB");
-    TURMAS.forEach(t => {
-        const optA = document.createElement("option");
-        optA.value = t;
-        optA.textContent = t;
-        jogoTurmaA.appendChild(optA);
-        const optB = document.createElement("option");
-        optB.value = t;
-        optB.textContent = t;
-        jogoTurmaB.appendChild(optB);
+    // listeners jogos público/admin
+    if (jogosTurnoSelect) {
+        jogosTurnoSelect.addEventListener("change", renderizarTabelaJogosPublica);
+    }
+    if (jogoTurno) {
+        jogoTurno.addEventListener("change", function() {
+            preencherTurmasJogoPorTurno(jogoTurno.value);
+        });
+    }
+    const btnSalvarJogo = document.getElementById("btnSalvarJogo");
+    const btnLimparJogo = document.getElementById("btnLimparJogo");
+    if (btnSalvarJogo) btnSalvarJogo.addEventListener("click", handleSalvarJogo);
+    if (btnLimparJogo) btnLimparJogo.addEventListener("click", function() {
+        limparFormularioJogo();
     });
 
-    document.getElementById("btnSalvarJogo").addEventListener("click", salvarJogo);
-    document.getElementById("btnLimparJogo").addEventListener("click", limparFormJogo);
-    document.getElementById("jogoSelecionado").addEventListener("change", preencherFormJogoSelecionado);
-
-    // Listeners Firestore
     iniciarListenerInscricoes();
     iniciarListenerExcecoes();
-    iniciarListenerJogos();
-
-    // Carrega config e aplica
-    loadConfigEvento();
+    iniciarListenerJogos(); // NOVO: escuta tabela de jogos
 }
 
 if (document.readyState === "loading") {
@@ -1417,11 +1078,8 @@ function iniciarListenerInscricoes() {
 
             atualizarDisponibilidadeModalidades();
             renderizarTabelaPublica();
-            if (isAdmin) {
-                renderizarTabelaAdmin();
-                atualizarSelectCancelar();
-                gerarRelatoriosGerais();
-            }
+            renderizarTabelaAdmin();
+            atualizarSelectCancelar();
         }, function(error) {
             console.error("Erro ao ouvir inscrições:", error);
         });
@@ -1446,33 +1104,27 @@ function iniciarListenerExcecoes() {
         });
 }
 
+// NOVO: listener para coleção "jogos"
 function iniciarListenerJogos() {
     db.collection("jogos")
-        .orderBy("dia", "asc")
-        .orderBy("horario", "asc")
+        .orderBy("data")
+        .orderBy("hora")
         .onSnapshot(function(snapshot) {
-            todasPartidas = [];
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                todasPartidas.push({
+            jogos = [];
+            snapshot.forEach(function(doc) {
+                const d = doc.data();
+                jogos.push({
                     id: doc.id,
-                    dia: data.dia || "",
-                    horario: data.horario || "",
-                    quadra: data.quadra || "",
-                    modalidade: data.modalidade || "",
-                    turmaA: data.turmaA || "",
-                    turmaB: data.turmaB || "",
-                    arbitro: data.arbitro || "",
-                    status: data.status || "Agendado",
-                    placarA: data.placarA != null ? data.placarA : "",
-                    placarB: data.placarB != null ? data.placarB : ""
+                    turno: d.turno || "",
+                    turma1: d.turma1 || "",
+                    turma2: d.turma2 || "",
+                    data: d.data || "",
+                    hora: d.hora || "",
+                    local: d.local || ""
                 });
             });
-            renderizarTabelaJogosPublico();
-            if (isAdmin) {
-                renderizarTabelaJogosAdmin();
-                atualizarSelectJogosAdmin();
-            }
+            renderizarTabelaJogosPublica();
+            renderizarTabelaJogosAdmin();
         }, function(error) {
             console.error("Erro ao ouvir jogos:", error);
         });
@@ -1483,11 +1135,9 @@ function iniciarListenerJogos() {
 async function handleSubmitInscricao(event) {
     event.preventDefault();
 
+    // Bloqueia novas inscrições após a data de expiração
     if (inscricoesEncerradas) {
-        mostrarMensagemForm(
-            `As inscrições foram encerradas. Prazo final: ${configEvento.dataLimiteInscricao || "configurar no ADM"}.`,
-            false
-        );
+        mostrarMensagemForm("As inscrições foram encerradas. Prazo final: 08/12/2025.", false);
         return;
     }
 
@@ -1537,14 +1187,10 @@ async function handleSubmitInscricao(event) {
         mostrarMensagemForm("Escolha pelo menos 1 modalidade.", false);
         return;
     }
-    const maxMods = configEvento.maxModalidadesPorAluno || 2;
-    if (selecionados.length > maxMods) {
-        mostrarMensagemForm("Você só pode escolher até " + maxMods + " modalidades.", false);
+    if (selecionados.length > LIMITE_MODALIDADES_POR_ALUNO) {
+        mostrarMensagemForm("Você só pode escolher até " + LIMITE_MODALIDADES_POR_ALUNO + " modalidades.", false);
         return;
     }
-
-    const limQueimadaTotal = configEvento.limiteQueimadaTotal || 10;
-    const limQueimadaSexo = configEvento.limiteQueimadaPorSexo || 5;
 
     for (let i = 0; i < selecionados.length; i++) {
         const mod = selecionados[i];
@@ -1554,29 +1200,29 @@ async function handleSubmitInscricao(event) {
             const qtdM = gen.Masculino || 0;
             const qtdF = gen.Feminino || 0;
 
-            if (totPorTurma >= limQueimadaTotal) {
+            if (totPorTurma >= LIMITE_QUEIMADA_TOTAL) {
                 mostrarMensagemForm(
-                    'A QUEIMADA MISTA está LOTADA para a turma ' + turma + ' (' + totPorTurma + '/' + limQueimadaTotal + ').',
+                    'A QUEIMADA MISTA está LOTADA para a turma ' + turma + ' (10/10).',
                     false
                 );
                 return;
             }
-            if (sexo === "Masculino" && qtdM >= limQueimadaSexo) {
+            if (sexo === "Masculino" && qtdM >= LIMITE_QUEIMADA_POR_SEXO) {
                 mostrarMensagemForm(
-                    'Já há ' + limQueimadaSexo + ' meninos na QUEIMADA MISTA da turma ' + turma + '. Escolha outra modalidade.',
+                    'Já há 5 meninos na QUEIMADA MISTA da turma ' + turma + '. Escolha outra modalidade.',
                     false
                 );
                 return;
             }
-            if (sexo === "Feminino" && qtdF >= limQueimadaSexo) {
+            if (sexo === "Feminino" && qtdF >= LIMITE_QUEIMADA_POR_SEXO) {
                 mostrarMensagemForm(
-                    'Já há ' + limQueimadaSexo + ' meninas na QUEIMADA MISTA da turma ' + turma + '. Escolha outra modalidade.',
+                    'Já há 5 meninas na QUEIMADA MISTA da turma ' + turma + '. Escolha outra modalidade.',
                     false
                 );
                 return;
             }
         } else {
-            const limite = getLimiteModalidade(mod) || 8;
+            const limite = LIMITE_MODALIDADE_TURMA[mod] || 8;
             const qtdAtual = (countsPorTurmaModalidade[turma] && countsPorTurmaModalidade[turma][mod]) ? countsPorTurmaModalidade[turma][mod] : 0;
             if (qtdAtual >= limite) {
                 mostrarMensagemForm(
@@ -1631,9 +1277,6 @@ function atualizarDisponibilidadeModalidades() {
     const spans = document.querySelectorAll(".modalidade-vagas");
     const checkboxes = document.querySelectorAll(".chkModalidade");
 
-    const limQueimadaTotal = configEvento.limiteQueimadaTotal || 10;
-    const limQueimadaSexo = configEvento.limiteQueimadaPorSexo || 5;
-
     for (let i = 0; i < spans.length; i++) {
         const span = spans[i];
         const mod = span.dataset.mod;
@@ -1646,20 +1289,20 @@ function atualizarDisponibilidadeModalidades() {
                 const gen = countsQueimadaGenero[turma] || { Masculino: 0, Feminino: 0 };
                 const qtdM = gen.Masculino || 0;
                 const qtdF = gen.Feminino || 0;
-                span.textContent = `${mod} (${tot}/${limQueimadaTotal} - Meninas: ${qtdF}/${limQueimadaSexo}, Meninos: ${qtdM}/${limQueimadaSexo})`;
-                if (tot >= limQueimadaTotal) {
+                span.textContent = mod + " (" + tot + "/10 - Meninas: " + qtdF + "/5, Meninos: " + qtdM + "/5)";
+                if (tot >= LIMITE_QUEIMADA_TOTAL) {
                     span.classList.add("modalidade-lotado");
                 } else {
                     span.classList.remove("modalidade-lotado");
                 }
             } else {
-                const limite = getLimiteModalidade(mod) || 8;
+                const limite = LIMITE_MODALIDADE_TURMA[mod] || 8;
                 const qtd = (countsPorTurmaModalidade[turma] && countsPorTurmaModalidade[turma][mod]) ? countsPorTurmaModalidade[turma][mod] : 0;
                 if (qtd >= limite) {
-                    span.textContent = `${mod} (LOTADO - ${qtd}/${limite})`;
+                    span.textContent = mod + " (LOTADO - " + qtd + "/" + limite + ")";
                     span.classList.add("modalidade-lotado");
                 } else {
-                    span.textContent = `${mod} (${qtd}/${limite} vagas ocupadas)`;
+                    span.textContent = mod + " (" + qtd + "/" + limite + " vagas ocupadas)";
                     span.classList.remove("modalidade-lotado");
                 }
             }
@@ -1683,20 +1326,20 @@ function atualizarDisponibilidadeModalidades() {
             if (!sexo) {
                 chk.disabled = true;
                 chk.checked = false;
-            } else if (tot >= limQueimadaTotal) {
+            } else if (tot >= LIMITE_QUEIMADA_TOTAL) {
                 chk.disabled = true;
                 chk.checked = false;
-            } else if (sexo === "Masculino" && qtdM >= limQueimadaSexo) {
+            } else if (sexo === "Masculino" && qtdM >= LIMITE_QUEIMADA_POR_SEXO) {
                 chk.disabled = true;
                 chk.checked = false;
-            } else if (sexo === "Feminino" && qtdF >= limQueimadaSexo) {
+            } else if (sexo === "Feminino" && qtdF >= LIMITE_QUEIMADA_POR_SEXO) {
                 chk.disabled = true;
                 chk.checked = false;
             } else {
                 chk.disabled = false;
             }
         } else {
-            const limite = getLimiteModalidade(mod) || 8;
+            const limite = LIMITE_MODALIDADE_TURMA[mod] || 8;
             const qtd = (countsPorTurmaModalidade[turma] && countsPorTurmaModalidade[turma][mod]) ? countsPorTurmaModalidade[turma][mod] : 0;
             if (qtd >= limite) {
                 chk.disabled = true;
@@ -1708,7 +1351,7 @@ function atualizarDisponibilidadeModalidades() {
     }
 }
 
-/* ============= 9) TABELA PÚBLICA DE INSCRITOS ============= */
+/* ============= 9) TABELA PÚBLICA (INSCRITOS) ============= */
 
 function renderizarTabelaPublica() {
     const corpo = document.querySelector("#tabelaPublica tbody");
@@ -1752,9 +1395,63 @@ function renderizarTabelaPublica() {
     }
 }
 
-/* ============= 10) TABELA ADMIN DE INSCRITOS ============= */
+/* ============= 9.1) TABELA PÚBLICA (JOGOS) ============= */
+
+function renderizarTabelaJogosPublica() {
+    const corpo = document.querySelector("#tabelaJogos tbody");
+    if (!corpo) return;
+    corpo.innerHTML = "";
+
+    const turnoSel = document.getElementById("jogosTurno").value;
+
+    if (!turnoSel) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 4;
+        td.textContent = "Selecione um turno para ver os jogos.";
+        tr.appendChild(td);
+        corpo.appendChild(tr);
+        return;
+    }
+
+    const lista = jogos.filter(j => j.turno === turnoSel);
+
+    if (lista.length === 0) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 4;
+        td.textContent = "Ainda não há jogos cadastrados para este turno.";
+        tr.appendChild(td);
+        corpo.appendChild(tr);
+        return;
+    }
+
+    for (let i = 0; i < lista.length; i++) {
+        const j = lista[i];
+        const tr = document.createElement("tr");
+
+        const tdData = document.createElement("td");
+        const tdHora = document.createElement("td");
+        const tdTurmas = document.createElement("td");
+        const tdLocal = document.createElement("td");
+
+        tdData.textContent = j.data || "-";
+        tdHora.textContent = j.hora || "-";
+        tdTurmas.textContent = (j.turma1 || "") + " x " + (j.turma2 || "");
+        tdLocal.textContent = j.local || "-";
+
+        tr.appendChild(tdData);
+        tr.appendChild(tdHora);
+        tr.appendChild(tdTurmas);
+        tr.appendChild(tdLocal);
+        corpo.appendChild(tr);
+    }
+}
+
+/* ============= 10) TABELA ADMIN INSCRITOS ============= */
 
 function renderizarTabelaAdmin() {
+    if (!isAdmin) return;
     const corpo = document.querySelector("#tabelaAdmin tbody");
     if (!corpo) return;
     corpo.innerHTML = "";
@@ -1810,6 +1507,71 @@ function renderizarTabelaAdmin() {
         tr.appendChild(tdMods);
         tr.appendChild(tdObs);
         tr.appendChild(tdData);
+        corpo.appendChild(tr);
+    }
+}
+
+/* ============= 10.1) TABELA ADMIN JOGOS ============= */
+
+function renderizarTabelaJogosAdmin() {
+    if (!isAdmin) return;
+    const corpo = document.querySelector("#tabelaJogosAdmin tbody");
+    if (!corpo) return;
+    corpo.innerHTML = "";
+
+    if (jogos.length === 0) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 6;
+        td.textContent = "Nenhum jogo cadastrado ainda.";
+        tr.appendChild(td);
+        corpo.appendChild(tr);
+        return;
+    }
+
+    for (let i = 0; i < jogos.length; i++) {
+        const j = jogos[i];
+        const tr = document.createElement("tr");
+
+        const tdTurno = document.createElement("td");
+        const tdData = document.createElement("td");
+        const tdHora = document.createElement("td");
+        const tdTurmas = document.createElement("td");
+        const tdLocal = document.createElement("td");
+        const tdAcoes = document.createElement("td");
+
+        tdTurno.textContent = j.turno || "-";
+        tdData.textContent = j.data || "-";
+        tdHora.textContent = j.hora || "-";
+        tdTurmas.textContent = (j.turma1 || "") + " x " + (j.turma2 || "");
+        tdLocal.textContent = j.local || "-";
+
+        const btnEditar = document.createElement("button");
+        btnEditar.textContent = "Editar";
+        btnEditar.className = "btn btn-primaria";
+        btnEditar.style.fontSize = "0.75rem";
+        btnEditar.addEventListener("click", function() {
+            carregarJogoParaEdicao(j.id);
+        });
+
+        const btnExcluir = document.createElement("button");
+        btnExcluir.textContent = "Excluir";
+        btnExcluir.className = "btn btn-primaria";
+        btnExcluir.style.fontSize = "0.75rem";
+        btnExcluir.style.marginLeft = "4px";
+        btnExcluir.addEventListener("click", function() {
+            excluirJogo(j.id);
+        });
+
+        tdAcoes.appendChild(btnEditar);
+        tdAcoes.appendChild(btnExcluir);
+
+        tr.appendChild(tdTurno);
+        tr.appendChild(tdData);
+        tr.appendChild(tdHora);
+        tr.appendChild(tdTurmas);
+        tr.appendChild(tdLocal);
+        tr.appendChild(tdAcoes);
         corpo.appendChild(tr);
     }
 }
@@ -1946,9 +1708,9 @@ async function handleCancelarInscricao() {
     }
 }
 
-/* ============= 14) RELATÓRIO DETALHADO ============= */
+/* ============= 14) RELATÓRIO POR MODALIDADE / TURMA (BOTÃO) ============= */
 
-function gerarRelatorioDetalhado() {
+function gerarRelatorio() {
     if (!isAdmin) {
         alert("Apenas a área administrativa pode gerar relatórios.");
         return;
@@ -2040,503 +1802,276 @@ function imprimirRelatorio() {
     window.print();
 }
 
-/* ============= 15) RELATÓRIOS GERAIS + CSV ============= */
+/* ============= 15) JOGOS - FUNÇÕES ADMIN ============= */
 
-function gerarRelatoriosGerais() {
-    const resumoDiv = document.getElementById("resumoGeral");
-    const corpoResumo = document.querySelector("#tabelaResumoModalidades tbody");
-    if (!resumoDiv || !corpoResumo) return;
+function preencherTurmasJogoPorTurno(turno) {
+    const sel1 = document.getElementById("jogoTurma1");
+    const sel2 = document.getElementById("jogoTurma2");
+    if (!sel1 || !sel2) return;
 
-    // Contagens gerais
-    const totalParticipantes = todasInscricoes.length;
-    const contagemTurma = {};
-    const contagemModalidade = {};
-    const contagemModalidadeTurma = {};
-    const contagemModalidadeTurmaSexo = {};
+    sel1.innerHTML = "";
+    sel2.innerHTML = "";
 
-    todasInscricoes.forEach(ins => {
-        // por turma
-        contagemTurma[ins.turma] = (contagemTurma[ins.turma] || 0) + 1;
+    const optPadrao1 = document.createElement("option");
+    optPadrao1.value = "";
+    optPadrao1.textContent = turno ? "Selecione a turma 1..." : "Selecione o turno...";
+    sel1.appendChild(optPadrao1);
 
-        // por modalidade (geral)
-        (ins.modalidades || []).forEach(m => {
-            contagemModalidade[m] = (contagemModalidade[m] || 0) + 1;
+    const optPadrao2 = document.createElement("option");
+    optPadrao2.value = "";
+    optPadrao2.textContent = turno ? "Selecione a turma 2..." : "Selecione o turno...";
+    sel2.appendChild(optPadrao2);
 
-            const key = m + "|" + ins.turma;
-            contagemModalidadeTurma[key] = (contagemModalidadeTurma[key] || 0) + 1;
+    const listaTurmas = turno ? getTurmasPorTurno(turno) : TURMAS;
+    listaTurmas.forEach(function(t) {
+        const o1 = document.createElement("option");
+        o1.value = t;
+        o1.textContent = t;
+        sel1.appendChild(o1);
 
-            if (!contagemModalidadeTurmaSexo[key]) {
-                contagemModalidadeTurmaSexo[key] = { Masc: 0, Fem: 0 };
-            }
-            if (ins.sexo === "Masculino") contagemModalidadeTurmaSexo[key].Masc++;
-            if (ins.sexo === "Feminino") contagemModalidadeTurmaSexo[key].Fem++;
-        });
-    });
-
-    // Turmas com maior participação
-    let maxTurma = 0, turmasTop = [];
-    Object.keys(contagemTurma).forEach(t => {
-        const v = contagemTurma[t];
-        if (v > maxTurma) {
-            maxTurma = v;
-            turmasTop = [t];
-        } else if (v === maxTurma) {
-            turmasTop.push(t);
-        }
-    });
-
-    // Modalidade mais procurada
-    let maxMod = 0, modsTop = [];
-    Object.keys(contagemModalidade).forEach(m => {
-        const v = contagemModalidade[m];
-        if (v > maxMod) {
-            maxMod = v;
-            modsTop = [m];
-        } else if (v === maxMod) {
-            modsTop.push(m);
-        }
-    });
-
-    resumoDiv.innerHTML = "";
-    const span1 = document.createElement("span");
-    span1.textContent = "Total de participantes: " + totalParticipantes;
-    resumoDiv.appendChild(span1);
-
-    const span2 = document.createElement("span");
-    span2.textContent = "Turmas com maior participação: " + (maxTurma > 0 ? turmasTop.join(", ") + " (" + maxTurma + ")" : "—");
-    resumoDiv.appendChild(span2);
-
-    const span3 = document.createElement("span");
-    span3.textContent = "Modalidade(s) mais procurada(s): " + (maxMod > 0 ? modsTop.join(", ") + " (" + maxMod + ")" : "—");
-    resumoDiv.appendChild(span3);
-
-    // Tabela por modalidade/turma
-    corpoResumo.innerHTML = "";
-    const keys = Object.keys(contagemModalidadeTurma).sort();
-    if (keys.length === 0) {
-        const tr = document.createElement("tr");
-        const td = document.createElement("td");
-        td.colSpan = 5;
-        td.textContent = "Ainda não há dados para relatório por modalidade/turma.";
-        tr.appendChild(td);
-        corpoResumo.appendChild(tr);
-        return;
-    }
-    keys.forEach(key => {
-        const [mod, turma] = key.split("|");
-        const total = contagemModalidadeTurma[key] || 0;
-        const sexInfo = contagemModalidadeTurmaSexo[key] || { Masc: 0, Fem: 0 };
-        const tr = document.createElement("tr");
-        const tdMod = document.createElement("td");
-        const tdTurma = document.createElement("td");
-        const tdTot = document.createElement("td");
-        const tdM = document.createElement("td");
-        const tdF = document.createElement("td");
-
-        tdMod.textContent = mod;
-        tdTurma.textContent = turma;
-        tdTot.textContent = total;
-        tdM.textContent = sexInfo.Masc;
-        tdF.textContent = sexInfo.Fem;
-
-        tr.appendChild(tdMod);
-        tr.appendChild(tdTurma);
-        tr.appendChild(tdTot);
-        tr.appendChild(tdM);
-        tr.appendChild(tdF);
-        corpoResumo.appendChild(tr);
+        const o2 = document.createElement("option");
+        o2.value = t;
+        o2.textContent = t;
+        sel2.appendChild(o2);
     });
 }
 
-function exportarCsvInscricoes() {
-    if (!todasInscricoes.length) {
-        alert("Não há inscrições para exportar.");
-        return;
-    }
-    const linhas = [];
-    // Cabeçalho
-    linhas.push([
-        "Nome","Email","Sexo","Turma","Turno","NumeroCamisa","Modalidades","Observacoes","DataHora"
-    ].join(";"));
-
-    todasInscricoes.forEach(ins => {
-        let dataHora = "";
-        if (ins.timestamp && ins.timestamp.toDate) {
-            const d = ins.timestamp.toDate();
-            const dataStr = d.toLocaleDateString("pt-BR");
-            const horaStr = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-            dataHora = dataStr + " " + horaStr;
-        }
-        function esc(s) {
-            if (s == null) return "";
-            const txt = String(s).replace(/"/g, '""');
-            return '"' + txt + '"';
-        }
-        const linha = [
-            esc(ins.nome),
-            esc(ins.email),
-            esc(ins.sexo),
-            esc(ins.turma),
-            esc(ins.turno),
-            esc(ins.camisaNumero),
-            esc((ins.modalidades || []).join(", ")),
-            esc(ins.observacoes),
-            esc(dataHora)
-        ].join(";");
-        linhas.push(linha);
-    });
-
-    const csvContent = linhas.join("\r\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "inscricoes_movimenta_odisseia.csv";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
-
-/* ============= 16) JOGOS (ADMIN + PÚBLICO) ============= */
-
-function renderizarTabelaJogosPublico() {
-    const corpo = document.querySelector("#tabelaJogosPublico tbody");
-    if (!corpo) return;
-    corpo.innerHTML = "";
-
-    const filtroMod = document.getElementById("filtroJogoModalidade").value;
-    const filtroDia = document.getElementById("filtroJogoDia").value;
-    const filtroStatus = document.getElementById("filtroJogoStatus").value;
-
-    const lista = todasPartidas.filter(j => {
-        let ok = true;
-        if (filtroMod !== "TODAS" && j.modalidade !== filtroMod) ok = false;
-        if (filtroDia && j.dia !== filtroDia) ok = false;
-        if (filtroStatus !== "TODOS" && j.status !== filtroStatus) ok = false;
-        return ok;
-    });
-
-    if (!lista.length) {
-        const tr = document.createElement("tr");
-        const td = document.createElement("td");
-        td.colSpan = 9;
-        td.textContent = "Nenhum jogo encontrado com esses filtros.";
-        tr.appendChild(td);
-        corpo.appendChild(tr);
-        return;
-    }
-
-    lista.forEach(j => {
-        const tr = document.createElement("tr");
-        const tdDia = document.createElement("td");
-        const tdHora = document.createElement("td");
-        const tdQuadra = document.createElement("td");
-        const tdMod = document.createElement("td");
-        const tdA = document.createElement("td");
-        const tdB = document.createElement("td");
-        const tdArb = document.createElement("td");
-        const tdStat = document.createElement("td");
-        const tdPlacar = document.createElement("td");
-
-        tdDia.textContent = j.dia || "";
-        tdHora.textContent = j.horario || "";
-        tdQuadra.textContent = j.quadra || "";
-        tdMod.textContent = j.modalidade || "";
-        tdA.textContent = j.turmaA || "";
-        tdB.textContent = j.turmaB || "";
-        tdArb.textContent = j.arbitro || "";
-        tdStat.textContent = j.status || "";
-        tdPlacar.textContent = (j.placarA !== "" && j.placarB !== "") ? (j.placarA + " x " + j.placarB) : "-";
-
-        tr.appendChild(tdDia);
-        tr.appendChild(tdHora);
-        tr.appendChild(tdQuadra);
-        tr.appendChild(tdMod);
-        tr.appendChild(tdA);
-        tr.appendChild(tdB);
-        tr.appendChild(tdArb);
-        tr.appendChild(tdStat);
-        tr.appendChild(tdPlacar);
-        corpo.appendChild(tr);
-    });
-}
-
-function renderizarTabelaJogosAdmin() {
-    const corpo = document.querySelector("#tabelaJogosAdmin tbody");
-    if (!corpo) return;
-    corpo.innerHTML = "";
-
-    if (!todasPartidas.length) {
-        const tr = document.createElement("tr");
-        const td = document.createElement("td");
-        td.colSpan = 9;
-        td.textContent = "Nenhum jogo cadastrado ainda.";
-        tr.appendChild(td);
-        corpo.appendChild(tr);
-        return;
-    }
-
-    todasPartidas.forEach(j => {
-        const tr = document.createElement("tr");
-        const tdDia = document.createElement("td");
-        const tdHora = document.createElement("td");
-        const tdQuadra = document.createElement("td");
-        const tdMod = document.createElement("td");
-        const tdA = document.createElement("td");
-        const tdB = document.createElement("td");
-        const tdArb = document.createElement("td");
-        const tdStat = document.createElement("td");
-        const tdPlacar = document.createElement("td");
-
-        tdDia.textContent = j.dia || "";
-        tdHora.textContent = j.horario || "";
-        tdQuadra.textContent = j.quadra || "";
-        tdMod.textContent = j.modalidade || "";
-        tdA.textContent = j.turmaA || "";
-        tdB.textContent = j.turmaB || "";
-        tdArb.textContent = j.arbitro || "";
-        tdStat.textContent = j.status || "";
-        tdPlacar.textContent = (j.placarA !== "" && j.placarB !== "") ? (j.placarA + " x " + j.placarB) : "-";
-
-        tr.appendChild(tdDia);
-        tr.appendChild(tdHora);
-        tr.appendChild(tdQuadra);
-        tr.appendChild(tdMod);
-        tr.appendChild(tdA);
-        tr.appendChild(tdB);
-        tr.appendChild(tdArb);
-        tr.appendChild(tdStat);
-        tr.appendChild(tdPlacar);
-        corpo.appendChild(tr);
-    });
-}
-
-function atualizarSelectJogosAdmin() {
-    const sel = document.getElementById("jogoSelecionado");
-    if (!sel) return;
-    const valorAnterior = sel.value;
-    sel.innerHTML = "";
-    const optPadrao = document.createElement("option");
-    optPadrao.value = "";
-    optPadrao.textContent = "Novo jogo / selecione para editar...";
-    sel.appendChild(optPadrao);
-
-    todasPartidas.forEach(j => {
-        const opt = document.createElement("option");
-        const label = `${j.dia || "?"} ${j.horario || ""} - ${j.modalidade || ""}: ${j.turmaA || "?"} x ${j.turmaB || "?"}`;
-        opt.value = j.id;
-        opt.textContent = label;
-        sel.appendChild(opt);
-    });
-
-    if (valorAnterior) sel.value = valorAnterior;
-}
-
-function limparFormJogo() {
+function limparFormularioJogo() {
     jogoEditandoId = null;
-    document.getElementById("jogoSelecionado").value = "";
-    document.getElementById("jogoDia").value = "";
-    document.getElementById("jogoHora").value = "";
-    document.getElementById("jogoQuadra").value = "";
-    document.getElementById("jogoModalidade").value = "";
-    document.getElementById("jogoTurmaA").value = "";
-    document.getElementById("jogoTurmaB").value = "";
-    document.getElementById("jogoArbitro").value = "";
-    document.getElementById("jogoStatus").value = "Agendado";
-    document.getElementById("jogoPlacarA").value = "";
-    document.getElementById("jogoPlacarB").value = "";
+    const turno = document.getElementById("jogoTurno");
+    const turma1 = document.getElementById("jogoTurma1");
+    const turma2 = document.getElementById("jogoTurma2");
+    const data = document.getElementById("jogoData");
+    const hora = document.getElementById("jogoHora");
+    const local = document.getElementById("jogoLocal");
+    const btnSalvar = document.getElementById("btnSalvarJogo");
+
+    if (turno) turno.value = "";
+    if (turma1) {
+        turma1.innerHTML = '<option value="">Selecione o turno...</option>';
+    }
+    if (turma2) {
+        turma2.innerHTML = '<option value="">Selecione o turno...</option>';
+    }
+    if (data) data.value = "";
+    if (hora) hora.value = "";
+    if (local) local.value = "";
+    if (btnSalvar) btnSalvar.textContent = "💾 Salvar jogo";
 }
 
-function preencherFormJogoSelecionado() {
-    const sel = document.getElementById("jogoSelecionado");
-    const id = sel.value;
-    if (!id) {
-        limparFormJogo();
-        return;
-    }
-    const jogo = todasPartidas.find(j => j.id === id);
-    if (!jogo) {
-        limparFormJogo();
-        return;
-    }
-    jogoEditandoId = id;
-    document.getElementById("jogoDia").value = jogo.dia || "";
-    document.getElementById("jogoHora").value = jogo.horario || "";
-    document.getElementById("jogoQuadra").value = jogo.quadra || "";
-    document.getElementById("jogoModalidade").value = jogo.modalidade || "";
-    document.getElementById("jogoTurmaA").value = jogo.turmaA || "";
-    document.getElementById("jogoTurmaB").value = jogo.turmaB || "";
-    document.getElementById("jogoArbitro").value = jogo.arbitro || "";
-    document.getElementById("jogoStatus").value = jogo.status || "Agendado";
-    document.getElementById("jogoPlacarA").value = jogo.placarA !== "" ? jogo.placarA : "";
-    document.getElementById("jogoPlacarB").value = jogo.placarB !== "" ? jogo.placarB : "";
-}
-
-async function salvarJogo() {
+async function handleSalvarJogo() {
     if (!isAdmin) {
-        alert("Apenas a área administrativa pode salvar jogos.");
+        alert("Apenas a área administrativa pode gerenciar jogos.");
         return;
     }
 
-    const dia = document.getElementById("jogoDia").value;
-    const horario = document.getElementById("jogoHora").value;
-    const quadra = document.getElementById("jogoQuadra").value.trim();
-    const modalidade = document.getElementById("jogoModalidade").value;
-    const turmaA = document.getElementById("jogoTurmaA").value;
-    const turmaB = document.getElementById("jogoTurmaB").value;
-    const arbitro = document.getElementById("jogoArbitro").value.trim();
-    const status = document.getElementById("jogoStatus").value;
-    const placarA = document.getElementById("jogoPlacarA").value;
-    const placarB = document.getElementById("jogoPlacarB").value;
+    const turno = document.getElementById("jogoTurno").value;
+    const turma1 = document.getElementById("jogoTurma1").value;
+    const turma2 = document.getElementById("jogoTurma2").value;
+    const data = document.getElementById("jogoData").value;
+    const hora = document.getElementById("jogoHora").value;
+    const local = document.getElementById("jogoLocal").value.trim();
 
-    if (!dia || !horario || !modalidade || !turmaA || !turmaB) {
-        alert("Preencha pelo menos dia, horário, modalidade e os dois times.");
+    if (!turno || !turma1 || !turma2 || !data || !hora || !local) {
+        alert("Preencha turno, turmas, data, horário e local.");
         return;
     }
-    if (turmaA === turmaB) {
-        alert("Time A e Time B não podem ser a mesma turma.");
+    if (turma1 === turma2) {
+        alert("Turma 1 e Turma 2 não podem ser iguais.");
         return;
     }
 
     const docData = {
-        dia: dia,
-        horario: horario,
-        quadra: quadra || "",
-        modalidade: modalidade,
-        turmaA: turmaA,
-        turmaB: turmaB,
-        arbitro: arbitro || "",
-        status: status || "Agendado",
-        placarA: placarA !== "" ? Number(placarA) : null,
-        placarB: placarB !== "" ? Number(placarB) : null,
-        atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
+        turno: turno,
+        turma1: turma1,
+        turma2: turma2,
+        data: data,
+        hora: hora,
+        local: local
     };
 
     try {
         if (jogoEditandoId) {
-            await db.collection("jogos").doc(jogoEditandoId).set(docData, { merge: true });
+            await db.collection("jogos").doc(jogoEditandoId).update(docData);
             alert("Jogo atualizado com sucesso.");
         } else {
             await db.collection("jogos").add(docData);
-            alert("Jogo cadastrado com sucesso.");
+            alert("Jogo salvo com sucesso.");
         }
-        limparFormJogo();
-    } catch (err) {
-        console.error("Erro ao salvar jogo:", err);
+        limparFormularioJogo();
+    } catch (error) {
+        console.error("Erro ao salvar jogo:", error);
         alert("Erro ao salvar jogo. Tente novamente.");
     }
 }
 
-/* ============= 17) CONFIGURAÇÕES (SALVAR) ============= */
-
-async function salvarConfigEvento() {
-    if (!isAdmin) {
-        alert("Apenas a área administrativa pode salvar configurações.");
+function carregarJogoParaEdicao(id) {
+    const jogo = jogos.find(j => j.id === id);
+    if (!jogo) {
+        alert("Jogo não encontrado.");
         return;
     }
-    const agora = new Date();
-    const travaEdicao = getDataTravaEdicaoDate();
-    if (travaEdicao && agora >= travaEdicao) {
-        alert("As configurações estão travadas após a data de trava de edição.");
-        return;
+    jogoEditandoId = id;
+
+    const turno = document.getElementById("jogoTurno");
+    const turma1 = document.getElementById("jogoTurma1");
+    const turma2 = document.getElementById("jogoTurma2");
+    const data = document.getElementById("jogoData");
+    const hora = document.getElementById("jogoHora");
+    const local = document.getElementById("jogoLocal");
+    const btnSalvar = document.getElementById("btnSalvarJogo");
+
+    if (turno) {
+        turno.value = jogo.turno || "";
+        preencherTurmasJogoPorTurno(turno.value);
     }
+    if (turma1) turma1.value = jogo.turma1 || "";
+    if (turma2) turma2.value = jogo.turma2 || "";
+    if (data) data.value = jogo.data || "";
+    if (hora) hora.value = jogo.hora || "";
+    if (local) local.value = jogo.local || "";
+    if (btnSalvar) btnSalvar.textContent = "💾 Atualizar jogo";
 
-    const nomeEvento = document.getElementById("cfgNomeEvento").value.trim() || DEFAULT_CONFIG.nomeEvento;
-    const subtitulo = document.getElementById("cfgSubtitulo").value.trim() || DEFAULT_CONFIG.subtituloEvento;
-    const dataLimiteInscricao = document.getElementById("cfgDataLimiteInscricao").value || DEFAULT_CONFIG.dataLimiteInscricao;
-    const dataTravaEdicao = document.getElementById("cfgDataTravaEdicao").value || DEFAULT_CONFIG.dataTravaEdicao;
-    const maxModalidades = parseInt(document.getElementById("cfgMaxModalidades").value, 10) || DEFAULT_CONFIG.maxModalidadesPorAluno;
-    const limiteQueimadaSexo = parseInt(document.getElementById("cfgLimiteQueimadaSexo").value, 10) || DEFAULT_CONFIG.limiteQueimadaPorSexo;
-    const logoEscolaUrl = document.getElementById("cfgLogoEscola").value.trim();
-    const logoEventoUrl = document.getElementById("cfgLogoEvento").value.trim();
-
-    const limitesMod = {};
-    MODALIDADES.forEach(mod => {
-        const id = "cfgLimite_" + mod.replace(/\s/g, "_");
-        const val = parseInt(document.getElementById(id).value, 10);
-        limitesMod[mod] = val > 0 ? val : getLimiteModalidade(mod);
-    });
-
-    const novoConfig = {
-        nomeEvento: nomeEvento,
-        subtituloEvento: subtitulo,
-        dataLimiteInscricao: dataLimiteInscricao,
-        dataTravaEdicao: dataTravaEdicao,
-        maxModalidadesPorAluno: maxModalidades,
-        limiteQueimadaPorSexo: limiteQueimadaSexo,
-        limiteQueimadaTotal: limiteQueimadaSexo * 2,
-        limitePorModalidade: limitesMod,
-        logoEscolaUrl: logoEscolaUrl,
-        logoEventoUrl: logoEventoUrl
-    };
-
-    try {
-        await db.collection("config").doc("evento").set(novoConfig, { merge: true });
-        configEvento = Object.assign({}, configEvento, novoConfig);
-        applyConfigToUI();
-        atualizarDisponibilidadeModalidades();
-        alert("Configurações salvas com sucesso.");
-    } catch (err) {
-        console.error("Erro ao salvar configurações:", err);
-        alert("Erro ao salvar configurações. Tente novamente.");
+    // rolar até a seção de jogos no admin
+    const adminSection = document.getElementById("adminSection");
+    if (adminSection) {
+        adminSection.scrollIntoView({ behavior: "smooth" });
     }
 }
 
-/* ============= 18) TROCA DE TELAS (ALUNO / INSCRITOS / JOGOS / ADMIN) ============= */
+async function excluirJogo(id) {
+    if (!isAdmin) {
+        alert("Apenas a área administrativa pode excluir jogos.");
+        return;
+    }
+    const jogo = jogos.find(j => j.id === id);
+    const desc = jogo ? (jogo.turma1 + " x " + jogo.turma2 + " (" + jogo.turno + ")") : id;
+    const conf = confirm('Tem certeza que deseja excluir o jogo "' + desc + '"?');
+    if (!conf) return;
 
-function mostrarTelaPrincipal() {
+    try {
+        await db.collection("jogos").doc(id).delete();
+        alert("Jogo excluído com sucesso.");
+        if (jogoEditandoId === id) {
+            limparFormularioJogo();
+        }
+    } catch (error) {
+        console.error("Erro ao excluir jogo:", error);
+        alert("Erro ao excluir jogo. Tente novamente.");
+    }
+}
+
+/* ============= 16) TROCA DE TELAS (ALUNO / INSCRITOS / JOGOS / ADMIN) ============= */
+
+function alternarPainelInscritos() {
+    if (adminAberto) {
+        fecharAdmin();
+    }
     const secForm = document.getElementById("secInscricao");
     const secInscritos = document.getElementById("secInscritos");
-    const secJogos = document.getElementById("secJogosPublico");
+    const secJogos = document.getElementById("secJogos");
     const admin = document.getElementById("adminSection");
     const btnInscritos = document.getElementById("btnToggleInscritos");
     const btnJogos = document.getElementById("btnToggleJogos");
 
-    secForm.style.display = "block";
-    secInscritos.style.display = "none";
-    secJogos.style.display = "none";
     admin.style.display = "none";
-    mostrandoInscritos = false;
-    mostrandoJogos = false;
-    adminAberto = false;
-    isAdmin = false;
-    btnInscritos.textContent = "👀 Ver inscritos";
-    btnJogos.textContent = "📅 Ver jogos";
-}
 
-function alternarPainelInscritos() {
-    const secForm = document.getElementById("secInscricao");
-    const secInscritos = document.getElementById("secInscritos");
-    const secJogos = document.getElementById("secJogosPublico");
-    const admin = document.getElementById("adminSection");
-    const btn = document.getElementById("btnToggleInscritos");
-    const btnJogos = document.getElementById("btnToggleJogos");
-
-    admin.style.display = "none";
-    adminAberto = false;
-    isAdmin = false;
-    secJogos.style.display = "none";
+    // se estava em jogos, voltar para estado normal
     mostrandoJogos = false;
-    btnJogos.textContent = "📅 Ver jogos";
+    if (btnJogos) btnJogos.textContent = "📅 Ver jogos";
+    if (secJogos) secJogos.style.display = "none";
 
     mostrandoInscritos = !mostrandoInscritos;
     if (mostrandoInscritos) {
         secForm.style.display = "none";
         secInscritos.style.display = "block";
-        btn.textContent = "⬅ Voltar para inscrição";
+        btnInscritos.textContent = "⬅ Voltar para inscrição";
         secInscritos.scrollIntoView({ behavior: "smooth" });
     } else {
         secForm.style.display = "block";
         secInscritos.style.display = "none";
-        btn.textContent = "👀 Ver inscritos";
+        btnInscritos.textContent = "👀 Ver inscritos";
         secForm.scrollIntoView({ behavior: "smooth" });
     }
 }
 
 function alternarPainelJogos() {
+    if (adminAberto) {
+        fecharAdmin();
+    }
     const secForm = document.getElementById("secInscricao");
     const secInscritos = document.getElementById("secInscritos");
-    const secJogos = document.getElementById("secJogosPublico");
+    const secJogos = document.getElementById("secJogos");
     const admin = document.getElementById("adminSection");
-   
+    const btnInscritos = document.getElementById("btnToggleInscritos");
+    const btnJogos = document.getElementById("btnToggleJogos");
+
+    admin.style.display = "none";
+
+    // se estava em inscritos, volta pra normal
+    mostrandoInscritos = false;
+    if (btnInscritos) btnInscritos.textContent = "👀 Ver inscritos";
+    if (secInscritos) secInscritos.style.display = "none";
+
+    mostrandoJogos = !mostrandoJogos;
+    if (mostrandoJogos) {
+        secForm.style.display = "none";
+        secJogos.style.display = "block";
+        btnJogos.textContent = "⬅ Voltar para inscrição";
+        secJogos.scrollIntoView({ behavior: "smooth" });
+    } else {
+        secForm.style.display = "block";
+        secJogos.style.display = "none";
+        btnJogos.textContent = "📅 Ver jogos";
+        secForm.scrollIntoView({ behavior: "smooth" });
+    }
+}
+
+function abrirAdmin() {
+    const secForm = document.getElementById("secInscricao");
+    const secInscritos = document.getElementById("secInscritos");
+    const secJogos = document.getElementById("secJogos");
+    const admin = document.getElementById("adminSection");
+    const btnInscritos = document.getElementById("btnToggleInscritos");
+    const btnJogos = document.getElementById("btnToggleJogos");
+
+    adminAberto = true;
+    secForm.style.display = "none";
+    secInscritos.style.display = "none";
+    secJogos.style.display = "none";
+
+    mostrandoInscritos = false;
+    mostrandoJogos = false;
+    if (btnInscritos) btnInscritos.textContent = "👀 Ver inscritos";
+    if (btnJogos) btnJogos.textContent = "📅 Ver jogos";
+
+    admin.style.display = "block";
+    renderizarTabelaAdmin();
+    renderizarTabelaJogosAdmin();
+    admin.scrollIntoView({ behavior: "smooth" });
+}
+
+function fecharAdmin() {
+    const secForm = document.getElementById("secInscricao");
+    const secInscritos = document.getElementById("secInscritos");
+    const secJogos = document.getElementById("secJogos");
+    const admin = document.getElementById("adminSection");
+    const btnInscritos = document.getElementById("btnToggleInscritos");
+    const btnJogos = document.getElementById("btnToggleJogos");
+
+    adminAberto = false;
+    isAdmin = false;
+    admin.style.display = "none";
+
+    // volta para o formulário por padrão
+    mostrandoInscritos = false;
+    mostrandoJogos = false;
+    secForm.style.display = "block";
+    secInscritos.style.display = "none";
+    secJogos.style.display = "none";
+    if (btnInscritos) btnInscritos.textContent = "👀 Ver inscritos";
+    if (btnJogos) btnJogos.textContent = "📅 Ver jogos";
+}
+</script>
+</body>
+</html>
