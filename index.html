@@ -1102,13 +1102,12 @@ function iniciarListenerExcecoes() {
         });
 }
 
-// LISTENER PARA A COLEÇÃO "jogos"
+// LISTENER PARA A COLEÇÃO "jogos" (CORRIGIDO)
 function iniciarListenerJogos() {
     db.collection("jogos")
-        .orderBy("data")
-        .orderBy("hora")
         .onSnapshot(function(snapshot) {
             jogos = [];
+
             snapshot.forEach(function(doc) {
                 const d = doc.data();
                 jogos.push({
@@ -1121,11 +1120,22 @@ function iniciarListenerJogos() {
                     local: d.local || ""
                 });
             });
-            // Atualiza tanto o painel público quanto o admin
+
+            // ordena por data+hora em JS (para não depender de índice no Firestore)
+            jogos.sort(function(a, b) {
+                const va = (a.data || "") + " " + (a.hora || "");
+                const vb = (b.data || "") + " " + (b.hora || "");
+                if (va < vb) return -1;
+                if (va > vb) return 1;
+                return 0;
+            });
+
+            // Atualiza as duas tabelas: alunos (Ver jogos) e admin
             renderizarTabelaJogosPublica();
             renderizarTabelaJogosAdmin();
         }, function(error) {
             console.error("Erro ao ouvir jogos:", error);
+            alert("Erro ao carregar a tabela de jogos. Veja o console do navegador.");
         });
 }
 
