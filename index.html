@@ -346,7 +346,7 @@
         <button id="btnToggleInscritos" class="btn btn-primaria">
             👀 Ver inscritos
         </button>
-        <!-- NOVO BOTÃO VER JOGOS -->
+        <!-- BOTÃO VER JOGOS -->
         <button id="btnToggleJogos" class="btn btn-primaria">
             📅 Ver jogos
         </button>
@@ -465,7 +465,7 @@
         </table>
     </section>
 
-    <!-- NOVA SEÇÃO: TABELA DE JOGOS (VISUALIZAÇÃO ALUNO) -->
+    <!-- SEÇÃO: TABELA DE JOGOS (VISUALIZAÇÃO ALUNO) -->
     <section class="card" id="secJogos">
         <h2>Tabela de jogos</h2>
         <small>Selecione o turno para ver os jogos do Movimenta Odisseia.</small>
@@ -492,7 +492,7 @@
                 </tr>
             </thead>
             <tbody>
-                <!-- jogos via JS -->
+                <!-- jogos via JS (filtrados por turno) -->
             </tbody>
         </table>
     </section>
@@ -593,11 +593,11 @@
             </button>
         </div>
 
-        <!-- NOVO BLOCO: CRIAR / EDITAR TABELA DE JOGOS -->
+        <!-- BLOCO: CRIAR / EDITAR TABELA DE JOGOS -->
         <div class="admin-actions">
             <h3>Criar / editar tabela de jogos</h3>
             <p style="font-size:0.84rem; margin:4px 0 8px;">
-                Selecione o turno, defina <strong>Turma X Turma</strong>, data, horário e local. Clique em <strong>Salvar jogo</strong> para montar a tabela.
+                Selecione o turno, defina <strong>Turma X Turma</strong>, data, horário e local. Clique em <strong>Salvar jogo</strong> para montar a tabela. Tudo que for salvo aqui aparece automaticamente no botão <strong>Ver jogos</strong> para os alunos, de acordo com o turno.
             </p>
             <div class="grid-2">
                 <div>
@@ -759,7 +759,7 @@ let todasInscricoes = [];
 let isAdmin = false;
 let adminAberto = false;
 let mostrandoInscritos = false;
-let mostrandoJogos = false; // novo estado
+let mostrandoJogos = false;
 let nomesExcecao = [];
 let emailAtual = null;
 let inscricoesEncerradas = false;
@@ -831,17 +831,12 @@ function initInterclasse() {
     // elementos dos jogos (público)
     const jogosTurnoSelect = document.getElementById("jogosTurno");
 
-    // elementos dos jogos (admin)
-    const jogoTurno = document.getElementById("jogoTurno");
-    const jogoTurma1 = document.getElementById("jogoTurma1");
-    const jogoTurma2 = document.getElementById("jogoTurma2");
-
     if (!selectTurma || !selectTurno || !filtroTurma || !filtroModalidade || !modalidadesContainer) {
         console.error("Erro ao carregar elementos principais. Verifique o HTML.");
         return;
     }
 
-    // Overlay de e-mail (sempre pede, tanto no PC quanto no celular)
+    // Overlay de e-mail (sempre pede)
     const overlay = document.getElementById("emailOverlay");
     const emailInput = document.getElementById("emailAluno");
     const btnEntrarEmail = document.getElementById("btnEntrarEmail");
@@ -994,10 +989,13 @@ function initInterclasse() {
     document.getElementById("btnGerarRelatorio").addEventListener("click", gerarRelatorio);
     document.getElementById("btnImprimirRelatorio").addEventListener("click", imprimirRelatorio);
 
-    // listeners jogos público/admin
+    // listener jogos público (seleção de turno)
     if (jogosTurnoSelect) {
         jogosTurnoSelect.addEventListener("change", renderizarTabelaJogosPublica);
     }
+
+    // listeners jogos admin
+    const jogoTurno = document.getElementById("jogoTurno");
     if (jogoTurno) {
         jogoTurno.addEventListener("change", function() {
             preencherTurmasJogoPorTurno(jogoTurno.value);
@@ -1012,7 +1010,7 @@ function initInterclasse() {
 
     iniciarListenerInscricoes();
     iniciarListenerExcecoes();
-    iniciarListenerJogos(); // NOVO: escuta tabela de jogos
+    iniciarListenerJogos(); // escuta tabela de jogos em tempo real
 }
 
 if (document.readyState === "loading") {
@@ -1104,7 +1102,7 @@ function iniciarListenerExcecoes() {
         });
 }
 
-// NOVO: listener para coleção "jogos"
+// LISTENER PARA A COLEÇÃO "jogos"
 function iniciarListenerJogos() {
     db.collection("jogos")
         .orderBy("data")
@@ -1123,6 +1121,7 @@ function iniciarListenerJogos() {
                     local: d.local || ""
                 });
             });
+            // Atualiza tanto o painel público quanto o admin
             renderizarTabelaJogosPublica();
             renderizarTabelaJogosAdmin();
         }, function(error) {
@@ -1914,8 +1913,6 @@ function carregarJogoParaEdicao(id) {
     jogoEditandoId = id;
 
     const turno = document.getElementById("jogoTurno");
-    const turma1 = document.getElementById("jogoTurma1");
-    const turma2 = document.getElementById("jogoTurma2");
     const data = document.getElementById("jogoData");
     const hora = document.getElementById("jogoHora");
     const local = document.getElementById("jogoLocal");
@@ -1925,6 +1922,9 @@ function carregarJogoParaEdicao(id) {
         turno.value = jogo.turno || "";
         preencherTurmasJogoPorTurno(turno.value);
     }
+
+    const turma1 = document.getElementById("jogoTurma1");
+    const turma2 = document.getElementById("jogoTurma2");
     if (turma1) turma1.value = jogo.turma1 || "";
     if (turma2) turma2.value = jogo.turma2 || "";
     if (data) data.value = jogo.data || "";
@@ -1932,7 +1932,6 @@ function carregarJogoParaEdicao(id) {
     if (local) local.value = jogo.local || "";
     if (btnSalvar) btnSalvar.textContent = "💾 Atualizar jogo";
 
-    // rolar até a seção de jogos no admin
     const adminSection = document.getElementById("adminSection");
     if (adminSection) {
         adminSection.scrollIntoView({ behavior: "smooth" });
@@ -1976,7 +1975,7 @@ function alternarPainelInscritos() {
 
     admin.style.display = "none";
 
-    // se estava em jogos, voltar para estado normal
+    // se estava em jogos, volta para normal
     mostrandoJogos = false;
     if (btnJogos) btnJogos.textContent = "📅 Ver jogos";
     if (secJogos) secJogos.style.display = "none";
@@ -2008,7 +2007,7 @@ function alternarPainelJogos() {
 
     admin.style.display = "none";
 
-    // se estava em inscritos, volta pra normal
+    // se estava em inscritos, volta para normal
     mostrandoInscritos = false;
     if (btnInscritos) btnInscritos.textContent = "👀 Ver inscritos";
     if (secInscritos) secInscritos.style.display = "none";
@@ -2063,7 +2062,6 @@ function fecharAdmin() {
     isAdmin = false;
     admin.style.display = "none";
 
-    // volta para o formulário por padrão
     mostrandoInscritos = false;
     mostrandoJogos = false;
     secForm.style.display = "block";
