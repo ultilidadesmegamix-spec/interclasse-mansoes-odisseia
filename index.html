@@ -316,6 +316,23 @@
             max-width: 300px;
             margin-top: 8px;
         }
+
+        /* JOGOS - nova seção de visualização */
+        #secJogos {
+            display: none;
+        }
+        .jogo-tabela-wrapper {
+            margin-top: 10px;
+            padding: 8px 10px;
+            border-radius: 10px;
+            border: 1px solid var(--borda);
+            background: #f9fbff;
+        }
+        .jogo-tabela-wrapper h4 {
+            margin: 0 0 4px;
+            font-size: 0.95rem;
+            color: var(--azul);
+        }
     </style>
 </head>
 <body>
@@ -339,6 +356,10 @@
     <div class="header-right">
         <button id="btnToggleInscritos" class="btn btn-primaria">
             👀 Ver inscritos
+        </button>
+        <!-- JOGOS: novo botão no topo -->
+        <button id="btnVerJogos" class="btn btn-primaria">
+            🏆 Ver jogos
         </button>
         <button id="btnAdminArea" class="btn btn-admin">
             🔐 Área Administrativa
@@ -453,6 +474,28 @@
                 <!-- linhas via JS -->
             </tbody>
         </table>
+    </section>
+
+    <!-- JOGOS (VISUALIZAÇÃO ALUNO) -->
+    <section class="card" id="secJogos">
+        <h2>Jogos por turno</h2>
+        <small>Selecione o turno para ver todas as partidas já cadastradas para o seu período.</small>
+
+        <div class="filtros" style="margin-top:8px;">
+            <div>
+                <label for="filtroTurnoJogo">Selecionar turno</label>
+                <select id="filtroTurnoJogo">
+                    <option value="">Selecione o turno...</option>
+                    <option value="Matutino">Matutino</option>
+                    <option value="Vespertino">Vespertino</option>
+                    <option value="Noturno">Noturno</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="listaJogosContainer" style="margin-top:10px;">
+            <!-- tabelinhas de jogos via JS -->
+        </div>
     </section>
 
     <!-- ÁREA ADMINISTRATIVA (SOMENTE COM SENHA) -->
@@ -571,6 +614,59 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- JOGOS: seção "Montar Jogos" na área administrativa -->
+        <div class="admin-actions">
+            <h3>Montar jogos</h3>
+            <p style="font-size:0.84rem; margin:4px 0 8px;">
+                Cadastre as partidas informando turno, turmas, data, horário e local. Os jogos aparecerão automaticamente no botão <strong>Ver jogos</strong>, filtrados pelo turno.
+            </p>
+            <div class="grid-2">
+                <div>
+                    <label for="jogoTurno">Selecionar Turno</label>
+                    <select id="jogoTurno">
+                        <option value="">Selecione o turno...</option>
+                        <option value="Matutino">Matutino</option>
+                        <option value="Vespertino">Vespertino</option>
+                        <option value="Noturno">Noturno</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="jogoData">Selecionar Data do jogo</label>
+                    <input type="date" id="jogoData" />
+                </div>
+            </div>
+
+            <div class="grid-2" style="margin-top:10px;">
+                <div>
+                    <label for="jogoTurma1">Selecionar Turma 1</label>
+                    <select id="jogoTurma1">
+                        <option value="">Selecione o turno primeiro...</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="jogoTurma2">Selecionar Turma 2</label>
+                    <select id="jogoTurma2">
+                        <option value="">Selecione o turno primeiro...</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid-2" style="margin-top:10px;">
+                <div>
+                    <label for="jogoHorario">Selecionar Horário</label>
+                    <input type="time" id="jogoHorario" />
+                </div>
+                <div>
+                    <label for="jogoLocal">Selecionar Local</label>
+                    <input type="text" id="jogoLocal" placeholder="Ex: Quadra principal" />
+                </div>
+            </div>
+
+            <button id="btnCadastrarJogo" class="btn btn-primaria" style="margin-top:10px;">
+                Cadastrar jogo
+            </button>
+        </div>
     </section>
 </main>
 
@@ -662,6 +758,11 @@ let nomesExcecao = [];
 let emailAtual = null;
 let inscricoesEncerradas = false;
 
+/* JOGOS - estado */
+let todosJogos = [];
+let turnoSelecionadoJogos = "";
+let mostrandoJogos = false;
+
 /* ============= 4) AUXILIARES ============= */
 
 function normalizarNome(str) {
@@ -696,6 +797,15 @@ function validarEmail(email) {
     return email.includes("@") && email.includes(".");
 }
 
+/* JOGOS - formatar data para dd/mm/aaaa */
+function formatarDataBR(isoStr) {
+    if (!isoStr) return "-";
+    const partes = isoStr.split("-");
+    if (partes.length !== 3) return isoStr;
+    const [ano, mes, dia] = partes;
+    return dia + "/" + mes + "/" + ano;
+}
+
 /* Verifica se as inscrições já expiraram e, se sim, bloqueia o formulário */
 function verificarExpiracao() {
     const agora = new Date();
@@ -721,6 +831,14 @@ function initInterclasse() {
     const modalidadesContainer = document.getElementById("modalidadesContainer");
     const relTurma = document.getElementById("relTurma");
     const relModalidade = document.getElementById("relModalidade");
+
+    // JOGOS - elementos
+    const btnVerJogos = document.getElementById("btnVerJogos");
+    const filtroTurnoJogo = document.getElementById("filtroTurnoJogo");
+    const jogoTurno = document.getElementById("jogoTurno");
+    const jogoTurma1 = document.getElementById("jogoTurma1");
+    const jogoTurma2 = document.getElementById("jogoTurma2");
+    const btnCadastrarJogo = document.getElementById("btnCadastrarJogo");
 
     if (!selectTurma || !selectTurno || !filtroTurma || !filtroModalidade || !modalidadesContainer) {
         console.error("Erro ao carregar elementos principais. Verifique o HTML.");
@@ -879,8 +997,59 @@ function initInterclasse() {
     document.getElementById("btnGerarRelatorio").addEventListener("click", gerarRelatorio);
     document.getElementById("btnImprimirRelatorio").addEventListener("click", imprimirRelatorio);
 
+    // JOGOS - eventos
+    if (btnVerJogos) {
+        btnVerJogos.addEventListener("click", alternarPainelJogos);
+    }
+    if (filtroTurnoJogo) {
+        filtroTurnoJogo.addEventListener("change", function() {
+            turnoSelecionadoJogos = this.value;
+            renderizarJogos(turnoSelecionadoJogos);
+        });
+    }
+    if (jogoTurma1 && jogoTurma2) {
+        jogoTurma1.innerHTML = '<option value="">Selecione o turno primeiro...</option>';
+        jogoTurma2.innerHTML = '<option value="">Selecione o turno primeiro...</option>';
+    }
+    if (jogoTurno && jogoTurma1 && jogoTurma2) {
+        jogoTurno.addEventListener("change", function() {
+            const turno = this.value;
+            const turmasTurno = getTurmasPorTurno(turno);
+            jogoTurma1.innerHTML = "";
+            jogoTurma2.innerHTML = "";
+
+            const opt1 = document.createElement("option");
+            opt1.value = "";
+            opt1.textContent = turno ? "Selecione a turma 1..." : "Selecione o turno primeiro...";
+            jogoTurma1.appendChild(opt1);
+
+            const opt2 = document.createElement("option");
+            opt2.value = "";
+            opt2.textContent = turno ? "Selecione a turma 2..." : "Selecione o turno primeiro...";
+            jogoTurma2.appendChild(opt2);
+
+            if (turno) {
+                turmasTurno.forEach(function(t) {
+                    const o1 = document.createElement("option");
+                    o1.value = t;
+                    o1.textContent = t;
+                    jogoTurma1.appendChild(o1);
+
+                    const o2 = document.createElement("option");
+                    o2.value = t;
+                    o2.textContent = t;
+                    jogoTurma2.appendChild(o2);
+                });
+            }
+        });
+    }
+    if (btnCadastrarJogo) {
+        btnCadastrarJogo.addEventListener("click", handleCadastrarJogo);
+    }
+
     iniciarListenerInscricoes();
     iniciarListenerExcecoes();
+    iniciarListenerJogos(); // JOGOS
 }
 
 if (document.readyState === "loading") {
@@ -969,6 +1138,32 @@ function iniciarListenerExcecoes() {
             renderizarListaExcecoes();
         }, function(error) {
             console.error("Erro ao ouvir exceções:", error);
+        });
+}
+
+/* JOGOS - listener Firestore */
+function iniciarListenerJogos() {
+    db.collection("jogos")
+        .orderBy("dataJogo", "asc")
+        .onSnapshot(function(snapshot) {
+            todosJogos = [];
+            snapshot.forEach(function(doc) {
+                const data = doc.data();
+                todosJogos.push({
+                    id: doc.id,
+                    turno: data.turno,
+                    turma1: data.turma1,
+                    turma2: data.turma2,
+                    dataJogo: data.dataJogo,
+                    horarioJogo: data.horarioJogo,
+                    localJogo: data.localJogo
+                });
+            });
+            if (turnoSelecionadoJogos) {
+                renderizarJogos(turnoSelecionadoJogos);
+            }
+        }, function(error) {
+            console.error("Erro ao ouvir jogos:", error);
         });
 }
 
@@ -1101,9 +1296,9 @@ async function handleSubmitInscricao(event) {
         mostrarMensagemForm("Inscrição realizada com sucesso! ✅", true);
 
         document.getElementById("formInscricao").reset();
-        const selectTurma = document.getElementById("turma");
-        selectTurma.innerHTML = '<option value="">Selecione o turno primeiro...</option>';
-        selectTurma.disabled = true;
+        const selectTurma2 = document.getElementById("turma");
+        selectTurma2.innerHTML = '<option value="">Selecione o turno primeiro...</option>';
+        selectTurma2.disabled = true;
         atualizarDisponibilidadeModalidades();
     } catch (error) {
         console.error("Erro ao salvar inscrição:", error);
@@ -1526,7 +1721,7 @@ function imprimirRelatorio() {
     window.print();
 }
 
-/* ============= 15) TROCA DE TELAS (ALUNO / INSCRITOS / ADMIN) ============= */
+/* ============= 15) TROCA DE TELAS (ALUNO / INSCRITOS / ADMIN / JOGOS) ============= */
 
 function alternarPainelInscritos() {
     if (adminAberto) {
@@ -1536,8 +1731,13 @@ function alternarPainelInscritos() {
     const secInscritos = document.getElementById("secInscritos");
     const admin = document.getElementById("adminSection");
     const btn = document.getElementById("btnToggleInscritos");
+    const secJogos = document.getElementById("secJogos");
+    const btnJogos = document.getElementById("btnVerJogos");
 
     admin.style.display = "none";
+    if (secJogos) secJogos.style.display = "none";
+    mostrandoJogos = false;
+    if (btnJogos) btnJogos.textContent = "🏆 Ver jogos";
 
     mostrandoInscritos = !mostrandoInscritos;
     if (mostrandoInscritos) {
@@ -1553,14 +1753,56 @@ function alternarPainelInscritos() {
     }
 }
 
+/* JOGOS - alternar painel de jogos */
+function alternarPainelJogos() {
+    if (adminAberto) {
+        fecharAdmin();
+    }
+    const secForm = document.getElementById("secInscricao");
+    const secInscritos = document.getElementById("secInscritos");
+    const secJogos = document.getElementById("secJogos");
+    const btnJogos = document.getElementById("btnVerJogos");
+    const btnInscritos = document.getElementById("btnToggleInscritos");
+
+    if (!secJogos || !btnJogos) return;
+
+    // Garantir que o painel de inscritos esteja fechado
+    mostrandoInscritos = false;
+    if (secInscritos) secInscritos.style.display = "none";
+    if (btnInscritos) btnInscritos.textContent = "👀 Ver inscritos";
+
+    mostrandoJogos = !mostrandoJogos;
+    if (mostrandoJogos) {
+        secForm.style.display = "none";
+        secJogos.style.display = "block";
+        btnJogos.textContent = "⬅ Voltar para inscrição";
+        secJogos.scrollIntoView({ behavior: "smooth" });
+    } else {
+        secForm.style.display = "block";
+        secJogos.style.display = "none";
+        btnJogos.textContent = "🏆 Ver jogos";
+        secForm.scrollIntoView({ behavior: "smooth" });
+    }
+}
+
 function abrirAdmin() {
     const secForm = document.getElementById("secInscricao");
     const secInscritos = document.getElementById("secInscritos");
     const admin = document.getElementById("adminSection");
+    const secJogos = document.getElementById("secJogos");
+    const btnJogos = document.getElementById("btnVerJogos");
+    const btnInscritos = document.getElementById("btnToggleInscritos");
 
     adminAberto = true;
+    if (btnJogos) btnJogos.textContent = "🏆 Ver jogos";
+    mostrandoJogos = false;
+    if (secJogos) secJogos.style.display = "none";
+
+    mostrandoInscritos = false;
+    if (btnInscritos) btnInscritos.textContent = "👀 Ver inscritos";
+
     secForm.style.display = "none";
-    secInscritos.style.display = "none";
+    if (secInscritos) secInscritos.style.display = "none";
     admin.style.display = "block";
     renderizarTabelaAdmin();
     admin.scrollIntoView({ behavior: "smooth" });
@@ -1581,6 +1823,106 @@ function fecharAdmin() {
     } else {
         secForm.style.display = "block";
         secInscritos.style.display = "none";
+    }
+}
+
+/* ============= 16) JOGOS - RENDERIZAÇÃO E CADASTRO ============= */
+
+function renderizarJogos(turno) {
+    const container = document.getElementById("listaJogosContainer");
+    if (!container) return;
+    container.innerHTML = "";
+
+    if (!turno) {
+        container.textContent = "Selecione um turno para ver os jogos.";
+        return;
+    }
+
+    const filtrados = todosJogos.filter(function(j) {
+        return j.turno === turno;
+    });
+
+    if (filtrados.length === 0) {
+        container.textContent = "Ainda não há jogos cadastrados para este turno.";
+        return;
+    }
+
+    filtrados.forEach(function(jogo) {
+        const wrap = document.createElement("div");
+        wrap.className = "jogo-tabela-wrapper";
+
+        const tabela = document.createElement("table");
+        const tbody = document.createElement("tbody");
+
+        function addLinha(label, valor) {
+            const tr = document.createElement("tr");
+            const th = document.createElement("th");
+            const td = document.createElement("td");
+            th.textContent = label;
+            td.textContent = valor || "-";
+            tr.appendChild(th);
+            tr.appendChild(td);
+            tbody.appendChild(tr);
+        }
+
+        addLinha("Data", formatarDataBR(jogo.dataJogo));
+        addLinha("Horário", jogo.horarioJogo || "-");
+        addLinha("Jogo", (jogo.turma1 || "") + " vs " + (jogo.turma2 || ""));
+        addLinha("Local", jogo.localJogo || "-");
+
+        tabela.appendChild(tbody);
+        wrap.appendChild(tabela);
+        container.appendChild(wrap);
+    });
+}
+
+async function handleCadastrarJogo(event) {
+    if (event && event.preventDefault) {
+        event.preventDefault();
+    }
+
+    if (!isAdmin) {
+        alert("Apenas a área administrativa pode cadastrar jogos.");
+        return;
+    }
+
+    const turno = document.getElementById("jogoTurno").value;
+    const turma1 = document.getElementById("jogoTurma1").value;
+    const turma2 = document.getElementById("jogoTurma2").value;
+    const dataJogo = document.getElementById("jogoData").value;
+    const horarioJogo = document.getElementById("jogoHorario").value;
+    const localJogo = (document.getElementById("jogoLocal").value || "").trim();
+
+    if (!turno || !turma1 || !turma2 || !dataJogo || !horarioJogo || !localJogo) {
+        alert("Preencha todos os campos do jogo.");
+        return;
+    }
+
+    if (turma1 === turma2) {
+        alert("Turma 1 e Turma 2 devem ser diferentes.");
+        return;
+    }
+
+    try {
+        await db.collection("jogos").add({
+            turno: turno,
+            turma1: turma1,
+            turma2: turma2,
+            dataJogo: dataJogo,
+            horarioJogo: horarioJogo,
+            localJogo: localJogo,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        alert("Jogo cadastrado com sucesso.");
+
+        document.getElementById("jogoTurma1").value = "";
+        document.getElementById("jogoTurma2").value = "";
+        document.getElementById("jogoData").value = "";
+        document.getElementById("jogoHorario").value = "";
+        document.getElementById("jogoLocal").value = "";
+    } catch (error) {
+        console.error("Erro ao cadastrar jogo:", error);
+        alert("Erro ao cadastrar jogo. Tente novamente.");
     }
 }
 </script>
