@@ -479,22 +479,13 @@
     <!-- JOGOS (VISUALIZAÇÃO ALUNO) -->
     <section class="card" id="secJogos">
         <h2>Jogos por turno</h2>
-        <small>Selecione o turno e, se quiser, filtre por série e data para ver as partidas cadastradas.</small>
+        <small>Selecione a série e, se quiser, filtre por data para ver as partidas cadastradas.</small>
 
         <div class="filtros" style="margin-top:8px;">
             <div>
-                <label for="filtroTurnoJogo">Selecionar turno</label>
-                <select id="filtroTurnoJogo">
-                    <option value="">Selecione o turno...</option>
-                    <option value="Matutino">Matutino</option>
-                    <option value="Vespertino">Vespertino</option>
-                    <option value="Noturno">Noturno</option>
-                </select>
-            </div>
-            <div>
-                <label for="filtroSerieJogo">Selecionar série (opcional)</label>
+                <label for="filtroSerieJogo">Selecionar série</label>
                 <select id="filtroSerieJogo">
-                    <option value="">Todas as séries</option>
+                    <option value="">Selecione a série...</option>
                     <option value="6">6º ano</option>
                     <option value="7">7º ano</option>
                     <option value="8">8º ano</option>
@@ -791,7 +782,6 @@ let inscricoesEncerradas = false;
 
 /* JOGOS - estado */
 let todosJogos = [];
-let turnoSelecionadoJogos = "";
 let mostrandoJogos = false;
 
 /* ============= 4) AUXILIARES ============= */
@@ -872,7 +862,6 @@ function initInterclasse() {
 
     // JOGOS - elementos
     const btnVerJogos = document.getElementById("btnVerJogos");
-    const filtroTurnoJogo = document.getElementById("filtroTurnoJogo");
     const filtroSerieJogo = document.getElementById("filtroSerieJogo");
     const filtroDataJogo = document.getElementById("filtroDataJogo");
     const jogoTurno = document.getElementById("jogoTurno");
@@ -1042,22 +1031,14 @@ function initInterclasse() {
     if (btnVerJogos) {
         btnVerJogos.addEventListener("click", alternarPainelJogos);
     }
-    if (filtroTurnoJogo) {
-        filtroTurnoJogo.addEventListener("change", function() {
-            turnoSelecionadoJogos = this.value;
-            renderizarJogos(turnoSelecionadoJogos);
-        });
-    }
     if (filtroSerieJogo) {
         filtroSerieJogo.addEventListener("change", function() {
-            const turno = document.getElementById("filtroTurnoJogo").value;
-            renderizarJogos(turno);
+            renderizarJogos();
         });
     }
     if (filtroDataJogo) {
         filtroDataJogo.addEventListener("change", function() {
-            const turno = document.getElementById("filtroTurnoJogo").value;
-            renderizarJogos(turno);
+            renderizarJogos();
         });
     }
     if (jogoTurma1 && jogoTurma2) {
@@ -1216,9 +1197,7 @@ function iniciarListenerJogos() {
                 });
             });
             atualizarSelectExcluirJogo();
-            if (turnoSelecionadoJogos) {
-                renderizarJogos(turnoSelecionadoJogos);
-            }
+            renderizarJogos();
         }, function(error) {
             console.error("Erro ao ouvir jogos:", error);
         });
@@ -1885,32 +1864,26 @@ function fecharAdmin() {
 
 /* ============= 16) JOGOS - RENDERIZAÇÃO, CADASTRO E EXCLUSÃO ============= */
 
-function renderizarJogos(turno) {
+function renderizarJogos() {
     const container = document.getElementById("listaJogosContainer");
     if (!container) return;
     container.innerHTML = "";
-
-    if (!turno) {
-        container.textContent = "Selecione um turno para ver os jogos.";
-        return;
-    }
 
     const filtroSerieEl = document.getElementById("filtroSerieJogo");
     const filtroDataEl = document.getElementById("filtroDataJogo");
     const serieFiltro = filtroSerieEl ? filtroSerieEl.value : "";
     const dataFiltro = filtroDataEl ? filtroDataEl.value : "";
 
+    if (!serieFiltro) {
+        container.textContent = "Selecione uma série para ver os jogos.";
+        return;
+    }
+
     let filtrados = todosJogos.filter(function(j) {
-        if (j.turno !== turno) return false;
+        const s1 = getSerieDigitFromTurma(j.turma1);
+        const s2 = getSerieDigitFromTurma(j.turma2);
+        if (s1 !== serieFiltro && s2 !== serieFiltro) return false;
 
-        // Filtro de série (opcional)
-        if (serieFiltro) {
-            const s1 = getSerieDigitFromTurma(j.turma1);
-            const s2 = getSerieDigitFromTurma(j.turma2);
-            if (s1 !== serieFiltro && s2 !== serieFiltro) return false;
-        }
-
-        // Filtro de data (opcional)
         if (dataFiltro && j.dataJogo !== dataFiltro) {
             return false;
         }
