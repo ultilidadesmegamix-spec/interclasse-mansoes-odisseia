@@ -627,7 +627,7 @@
         <div class="admin-actions">
             <h3>Montar jogos</h3>
             <p style="font-size:0.84rem; margin:4px 0 8px;">
-                Cadastre as partidas informando turno, turmas, data, horário e local. Os jogos aparecerão automaticamente no botão <strong>Ver jogos</strong>, filtrados pelo turno.
+                Cadastre as partidas informando turno, turmas, data, horário e local. Os jogos aparecerão automaticamente no botão <strong>Ver jogos</strong>.
             </p>
             <div class="grid-2">
                 <div>
@@ -643,6 +643,15 @@
                     <label for="jogoData">Selecionar Data do jogo</label>
                     <input type="date" id="jogoData" />
                 </div>
+            </div>
+
+            <!-- NOVO: selecionar modalidade do jogo -->
+            <div style="margin-top:10px;">
+                <label for="jogoModalidade">Selecionar Modalidade</label>
+                <select id="jogoModalidade">
+                    <option value="">Selecione a modalidade...</option>
+                    <!-- opções via JS -->
+                </select>
             </div>
 
             <div class="grid-2" style="margin-top:10px;">
@@ -867,6 +876,7 @@ function initInterclasse() {
     const jogoTurno = document.getElementById("jogoTurno");
     const jogoTurma1 = document.getElementById("jogoTurma1");
     const jogoTurma2 = document.getElementById("jogoTurma2");
+    const jogoModalidade = document.getElementById("jogoModalidade");
     const btnCadastrarJogo = document.getElementById("btnCadastrarJogo");
     const btnExcluirJogo = document.getElementById("btnExcluirJogo");
 
@@ -933,6 +943,17 @@ function initInterclasse() {
             opt.value = m;
             opt.textContent = m;
             relModalidade.appendChild(opt);
+        });
+    }
+
+    // Preencher select de modalidade de jogo (admin)
+    if (jogoModalidade) {
+        jogoModalidade.innerHTML = '<option value="">Selecione a modalidade...</option>';
+        MODALIDADES.forEach(function(m) {
+            const opt = document.createElement("option");
+            opt.value = m;
+            opt.textContent = m;
+            jogoModalidade.appendChild(opt);
         });
     }
 
@@ -1193,7 +1214,8 @@ function iniciarListenerJogos() {
                     turma2: data.turma2,
                     dataJogo: data.dataJogo,
                     horarioJogo: data.horarioJogo,
-                    localJogo: data.localJogo
+                    localJogo: data.localJogo,
+                    modalidade: data.modalidade || ""
                 });
             });
             atualizarSelectExcluirJogo();
@@ -1916,6 +1938,7 @@ function renderizarJogos() {
 
         addLinha("Data", formatarDataBR(jogo.dataJogo));
         addLinha("Horário", jogo.horarioJogo || "-");
+        addLinha("Modalidade", jogo.modalidade || "-");
         addLinha("Jogo", (jogo.turma1 || "") + " vs " + (jogo.turma2 || ""));
         addLinha("Local", jogo.localJogo || "-");
 
@@ -1941,9 +1964,10 @@ async function handleCadastrarJogo(event) {
     const dataJogo = document.getElementById("jogoData").value;
     const horarioJogo = document.getElementById("jogoHorario").value;
     const localJogo = (document.getElementById("jogoLocal").value || "").trim();
+    const modalidadeJogo = document.getElementById("jogoModalidade").value;
 
-    if (!turno || !turma1 || !turma2 || !dataJogo || !horarioJogo || !localJogo) {
-        alert("Preencha todos os campos do jogo.");
+    if (!turno || !turma1 || !turma2 || !dataJogo || !horarioJogo || !localJogo || !modalidadeJogo) {
+        alert("Preencha todos os campos do jogo, incluindo a modalidade.");
         return;
     }
 
@@ -1960,6 +1984,7 @@ async function handleCadastrarJogo(event) {
             dataJogo: dataJogo,
             horarioJogo: horarioJogo,
             localJogo: localJogo,
+            modalidade: modalidadeJogo,
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
         alert("Jogo cadastrado com sucesso.");
@@ -1969,6 +1994,7 @@ async function handleCadastrarJogo(event) {
         document.getElementById("jogoData").value = "";
         document.getElementById("jogoHorario").value = "";
         document.getElementById("jogoLocal").value = "";
+        document.getElementById("jogoModalidade").value = "";
     } catch (error) {
         console.error("Erro ao cadastrar jogo:", error);
         alert("Erro ao cadastrar jogo. Tente novamente.");
@@ -1990,6 +2016,7 @@ function atualizarSelectExcluirJogo() {
         opt.value = jogo.id;
         const dataLabel = formatarDataBR(jogo.dataJogo);
         const label =
+            (jogo.modalidade ? jogo.modalidade + " - " : "") +
             (jogo.turno || "") +
             " - " +
             dataLabel +
@@ -2023,7 +2050,9 @@ async function handleExcluirJogo() {
 
     const jogo = todosJogos.find(function(j) { return j.id === id; });
     const descricao = jogo
-        ? ((jogo.turma1 || "") + " vs " + (jogo.turma2 || "") + " - " + formatarDataBR(jogo.dataJogo) + " " + (jogo.horarioJogo || ""))
+        ? ((jogo.modalidade ? jogo.modalidade + " - " : "") +
+           (jogo.turma1 || "") + " vs " + (jogo.turma2 || "") +
+           " - " + formatarDataBR(jogo.dataJogo) + " " + (jogo.horarioJogo || ""))
         : "";
 
     const conf = confirm("Tem certeza que deseja excluir este jogo?\n" + descricao);
