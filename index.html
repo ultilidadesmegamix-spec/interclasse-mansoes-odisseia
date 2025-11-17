@@ -357,7 +357,7 @@
         <button id="btnToggleInscritos" class="btn btn-primaria">
             👀 Ver inscritos
         </button>
-        <!-- Botão novo Ver jogos -->
+        <!-- JOGOS: novo botão no topo -->
         <button id="btnVerJogos" class="btn btn-primaria">
             🏆 Ver jogos
         </button>
@@ -479,7 +479,7 @@
     <!-- JOGOS (VISUALIZAÇÃO ALUNO) -->
     <section class="card" id="secJogos">
         <h2>Jogos por turno</h2>
-        <small>Selecione o turno, a série (opcional) e a data (opcional) para ver as partidas.</small>
+        <small>Selecione o turno para ver todas as partidas já cadastradas para o seu período.</small>
 
         <div class="filtros" style="margin-top:8px;">
             <div>
@@ -490,23 +490,6 @@
                     <option value="Vespertino">Vespertino</option>
                     <option value="Noturno">Noturno</option>
                 </select>
-            </div>
-            <div>
-                <label for="filtroSerieJogo">Selecionar série (opcional)</label>
-                <select id="filtroSerieJogo">
-                    <option value="">Todas as séries</option>
-                    <option value="6">6º ano</option>
-                    <option value="7">7º ano</option>
-                    <option value="8">8º ano</option>
-                    <option value="9">9º ano</option>
-                    <option value="1">1º ano</option>
-                    <option value="2">2º ano</option>
-                    <option value="3">3º ano</option>
-                </select>
-            </div>
-            <div>
-                <label for="filtroDataJogo">Filtrar por data (opcional)</label>
-                <input type="date" id="filtroDataJogo" />
             </div>
         </div>
 
@@ -632,7 +615,7 @@
             </table>
         </div>
 
-        <!-- MONTAR JOGOS -->
+        <!-- JOGOS: seção "Montar Jogos" na área administrativa -->
         <div class="admin-actions">
             <h3>Montar jogos</h3>
             <p style="font-size:0.84rem; margin:4px 0 8px;">
@@ -683,20 +666,6 @@
             <button id="btnCadastrarJogo" class="btn btn-primaria" style="margin-top:10px;">
                 Cadastrar jogo
             </button>
-        </div>
-
-        <!-- EXCLUIR JOGO -->
-        <div class="admin-actions">
-            <h3>Excluir jogo</h3>
-            <p style="font-size:0.84rem; margin:4px 0 8px;">
-                Selecione um jogo já cadastrado e clique em <strong>Excluir jogo</strong> para removê-lo do sistema.
-            </p>
-            <div style="display:flex; flex-wrap:wrap; gap:6px;">
-                <select id="selectExcluirJogo" style="flex:1; min-width:220px;">
-                    <option value="">Selecione um jogo...</option>
-                </select>
-                <button id="btnExcluirJogo" class="btn btn-primaria">Excluir jogo</button>
-            </div>
         </div>
     </section>
 </main>
@@ -792,8 +761,6 @@ let inscricoesEncerradas = false;
 /* JOGOS - estado */
 let todosJogos = [];
 let turnoSelecionadoJogos = "";
-let serieSelecionadaJogos = "";
-let dataSelecionadaJogos = "";
 let mostrandoJogos = false;
 
 /* ============= 4) AUXILIARES ============= */
@@ -839,13 +806,6 @@ function formatarDataBR(isoStr) {
     return dia + "/" + mes + "/" + ano;
 }
 
-/* JOGOS - descobrir série pelo nome da turma (ex: "6ºA" => "6", "1ºB" => "1") */
-function getSerieFromTurmaString(turma) {
-    if (!turma) return "";
-    const match = turma.match(/^(\d+)/);
-    return match ? match[1] : "";
-}
-
 /* Verifica se as inscrições já expiraram e, se sim, bloqueia o formulário */
 function verificarExpiracao() {
     const agora = new Date();
@@ -875,13 +835,10 @@ function initInterclasse() {
     // JOGOS - elementos
     const btnVerJogos = document.getElementById("btnVerJogos");
     const filtroTurnoJogo = document.getElementById("filtroTurnoJogo");
-    const filtroSerieJogo = document.getElementById("filtroSerieJogo");
-    const filtroDataJogo = document.getElementById("filtroDataJogo");
     const jogoTurno = document.getElementById("jogoTurno");
     const jogoTurma1 = document.getElementById("jogoTurma1");
     const jogoTurma2 = document.getElementById("jogoTurma2");
     const btnCadastrarJogo = document.getElementById("btnCadastrarJogo");
-    const btnExcluirJogo = document.getElementById("btnExcluirJogo");
 
     if (!selectTurma || !selectTurno || !filtroTurma || !filtroModalidade || !modalidadesContainer) {
         console.error("Erro ao carregar elementos principais. Verifique o HTML.");
@@ -1050,18 +1007,6 @@ function initInterclasse() {
             renderizarJogos(turnoSelecionadoJogos);
         });
     }
-    if (filtroSerieJogo) {
-        filtroSerieJogo.addEventListener("change", function() {
-            serieSelecionadaJogos = this.value;
-            if (turnoSelecionadoJogos) renderizarJogos(turnoSelecionadoJogos);
-        });
-    }
-    if (filtroDataJogo) {
-        filtroDataJogo.addEventListener("change", function() {
-            dataSelecionadaJogos = this.value;
-            if (turnoSelecionadoJogos) renderizarJogos(turnoSelecionadoJogos);
-        });
-    }
     if (jogoTurma1 && jogoTurma2) {
         jogoTurma1.innerHTML = '<option value="">Selecione o turno primeiro...</option>';
         jogoTurma2.innerHTML = '<option value="">Selecione o turno primeiro...</option>';
@@ -1100,9 +1045,6 @@ function initInterclasse() {
     }
     if (btnCadastrarJogo) {
         btnCadastrarJogo.addEventListener("click", handleCadastrarJogo);
-    }
-    if (btnExcluirJogo) {
-        btnExcluirJogo.addEventListener("click", handleExcluirJogo);
     }
 
     iniciarListenerInscricoes();
@@ -1217,7 +1159,6 @@ function iniciarListenerJogos() {
                     localJogo: data.localJogo
                 });
             });
-            atualizarSelectExcluirJogo();
             if (turnoSelecionadoJogos) {
                 renderizarJogos(turnoSelecionadoJogos);
             }
@@ -1885,7 +1826,7 @@ function fecharAdmin() {
     }
 }
 
-/* ============= 16) JOGOS - RENDERIZAÇÃO, CADASTRO E EXCLUSÃO ============= */
+/* ============= 16) JOGOS - RENDERIZAÇÃO E CADASTRO ============= */
 
 function renderizarJogos(turno) {
     const container = document.getElementById("listaJogosContainer");
@@ -1897,26 +1838,12 @@ function renderizarJogos(turno) {
         return;
     }
 
-    let filtrados = todosJogos.filter(function(j) {
+    const filtrados = todosJogos.filter(function(j) {
         return j.turno === turno;
     });
 
-    if (serieSelecionadaJogos) {
-        filtrados = filtrados.filter(function(j) {
-            const s1 = getSerieFromTurmaString(j.turma1);
-            const s2 = getSerieFromTurmaString(j.turma2);
-            return s1 === serieSelecionadaJogos || s2 === serieSelecionadaJogos;
-        });
-    }
-
-    if (dataSelecionadaJogos) {
-        filtrados = filtrados.filter(function(j) {
-            return j.dataJogo === dataSelecionadaJogos;
-        });
-    }
-
     if (filtrados.length === 0) {
-        container.textContent = "Não há jogos com esses filtros.";
+        container.textContent = "Ainda não há jogos cadastrados para este turno.";
         return;
     }
 
@@ -1998,95 +1925,6 @@ async function handleCadastrarJogo(event) {
         alert("Erro ao cadastrar jogo. Tente novamente.");
     }
 }
-/* Preencher select de exclusão de jogos */
-function atualizarSelectExcluirJogo() {
-    const sel = document.getElementById("selectExcluirJogo");
-    if (!sel) return;
-
-    const valorAnterior = sel.value;
-
-    sel.innerHTML = "";
-    const optPadrao = document.createElement("option");
-    optPadrao.value = "";
-    optPadrao.textContent = "Selecione um jogo...";
-    sel.appendChild(optPadrao);
-
-    // Usa o array global todosJogos (preenchido no listener de jogos)
-    todosJogos.forEach(function(jogo) {
-        const opt = document.createElement("option");
-
-        const dataStr = formatarDataBR(jogo.dataJogo);
-        const horaStr = jogo.horarioJogo || "";
-        const desc = 
-            (jogo.turno || "") + " — " +
-            dataStr + (horaStr ? " " + horaStr : "") +
-            " — " + (jogo.turma1 || "") + " x " + (jogo.turma2 || "") +
-            (jogo.localJogo ? " — " + jogo.localJogo : "");
-
-        opt.value = jogo.id;
-        opt.textContent = desc;
-        sel.appendChild(opt);
-    });
-
-    if (valorAnterior) {
-        sel.value = valorAnterior;
-    }
-}
-
-/* Excluir jogo (botão na área administrativa) */
-async function handleExcluirJogo(event) {
-    if (event && event.preventDefault) {
-        event.preventDefault();
-    }
-
-    if (!isAdmin) {
-        alert("Apenas a área administrativa pode excluir jogos.");
-        return;
-    }
-
-    const sel = document.getElementById("selectExcluirJogo");
-    if (!sel) {
-        alert("Elemento de seleção de jogos não encontrado.");
-        return;
-    }
-
-    const idJogo = sel.value;
-    if (!idJogo) {
-        alert("Selecione um jogo para excluir.");
-        return;
-    }
-
-    // Localiza o jogo selecionado para montar a mensagem de confirmação
-    let jogoSelecionado = null;
-    for (let i = 0; i < todosJogos.length; i++) {
-        if (todosJogos[i].id === idJogo) {
-            jogoSelecionado = todosJogos[i];
-            break;
-        }
-    }
-
-    if (!jogoSelecionado) {
-        alert("Jogo não encontrado. Atualize a página e tente novamente.");
-        return;
-    }
-
-    const dataStr = formatarDataBR(jogoSelecionado.dataJogo);
-    const horaStr = jogoSelecionado.horarioJogo || "";
-    const confirmacao = confirm(
-        'Tem certeza que deseja excluir o jogo "' +
-        (jogoSelecionado.turma1 || "") + ' x ' + (jogoSelecionado.turma2 || "") +
-        '" em ' + dataStr + (horaStr ? " às " + horaStr : "") +
-        '?'
-    );
-
-    if (!confirmacao) return;
-
-    try {
-        await db.collection("jogos").doc(idJogo).delete();
-        alert("Jogo excluído com sucesso.");
-        // O listener de jogos (onSnapshot) vai atualizar a lista e o select automaticamente
-    } catch (error) {
-        console.error("Erro ao excluir jogo:", error);
-        alert("Erro ao excluir jogo. Tente novamente.");
-    }
-}
+</script>
+</body>
+</html>
