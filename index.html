@@ -479,7 +479,7 @@
     <!-- JOGOS (VISUALIZAÇÃO ALUNO) -->
     <section class="card" id="secJogos">
         <h2>Jogos por turno</h2>
-        <small>Selecione o turno para ver todas as partidas já cadastradas para o seu período.</small>
+        <small>Selecione o turno e, se quiser, filtre por série e data para ver as partidas cadastradas.</small>
 
         <div class="filtros" style="margin-top:8px;">
             <div>
@@ -490,6 +490,23 @@
                     <option value="Vespertino">Vespertino</option>
                     <option value="Noturno">Noturno</option>
                 </select>
+            </div>
+            <div>
+                <label for="filtroSerieJogo">Selecionar série (opcional)</label>
+                <select id="filtroSerieJogo">
+                    <option value="">Todas as séries</option>
+                    <option value="6">6º ano</option>
+                    <option value="7">7º ano</option>
+                    <option value="8">8º ano</option>
+                    <option value="9">9º ano</option>
+                    <option value="1">1º ano</option>
+                    <option value="2">2º ano</option>
+                    <option value="3">3º ano</option>
+                </select>
+            </div>
+            <div>
+                <label for="filtroDataJogo">Filtrar por data (opcional)</label>
+                <input type="date" id="filtroDataJogo" />
             </div>
         </div>
 
@@ -615,7 +632,7 @@
             </table>
         </div>
 
-        <!-- JOGOS: seção "Montar Jogos" na área administrativa -->
+        <!-- JOGOS: seção "Montar jogos" na área administrativa -->
         <div class="admin-actions">
             <h3>Montar jogos</h3>
             <p style="font-size:0.84rem; margin:4px 0 8px;">
@@ -666,6 +683,20 @@
             <button id="btnCadastrarJogo" class="btn btn-primaria" style="margin-top:10px;">
                 Cadastrar jogo
             </button>
+
+            <!-- EXCLUIR JOGO -->
+            <div style="margin-top:12px;">
+                <h4 style="margin:0 0 6px; font-size:0.9rem; color:var(--azul);">Excluir jogo cadastrado</h4>
+                <p style="font-size:0.8rem; margin:0 0 6px;">
+                    Selecione um jogo da lista e clique em <strong>Excluir jogo selecionado</strong> para removê-lo.
+                </p>
+                <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                    <select id="selectExcluirJogo" style="flex:1; min-width:220px;">
+                        <option value="">Selecione um jogo...</option>
+                    </select>
+                    <button id="btnExcluirJogo" class="btn btn-primaria">Excluir jogo selecionado</button>
+                </div>
+            </div>
         </div>
     </section>
 </main>
@@ -806,6 +837,13 @@ function formatarDataBR(isoStr) {
     return dia + "/" + mes + "/" + ano;
 }
 
+/* JOGOS - pegar "série" pela turma (primeiro dígito) */
+function getSerieDigitFromTurma(turma) {
+    if (!turma || typeof turma !== "string") return "";
+    // Ex: "6ºA" -> "6", "1ºC" -> "1"
+    return turma.charAt(0);
+}
+
 /* Verifica se as inscrições já expiraram e, se sim, bloqueia o formulário */
 function verificarExpiracao() {
     const agora = new Date();
@@ -835,10 +873,13 @@ function initInterclasse() {
     // JOGOS - elementos
     const btnVerJogos = document.getElementById("btnVerJogos");
     const filtroTurnoJogo = document.getElementById("filtroTurnoJogo");
+    const filtroSerieJogo = document.getElementById("filtroSerieJogo");
+    const filtroDataJogo = document.getElementById("filtroDataJogo");
     const jogoTurno = document.getElementById("jogoTurno");
     const jogoTurma1 = document.getElementById("jogoTurma1");
     const jogoTurma2 = document.getElementById("jogoTurma2");
     const btnCadastrarJogo = document.getElementById("btnCadastrarJogo");
+    const btnExcluirJogo = document.getElementById("btnExcluirJogo");
 
     if (!selectTurma || !selectTurno || !filtroTurma || !filtroModalidade || !modalidadesContainer) {
         console.error("Erro ao carregar elementos principais. Verifique o HTML.");
@@ -1007,6 +1048,18 @@ function initInterclasse() {
             renderizarJogos(turnoSelecionadoJogos);
         });
     }
+    if (filtroSerieJogo) {
+        filtroSerieJogo.addEventListener("change", function() {
+            const turno = document.getElementById("filtroTurnoJogo").value;
+            renderizarJogos(turno);
+        });
+    }
+    if (filtroDataJogo) {
+        filtroDataJogo.addEventListener("change", function() {
+            const turno = document.getElementById("filtroTurnoJogo").value;
+            renderizarJogos(turno);
+        });
+    }
     if (jogoTurma1 && jogoTurma2) {
         jogoTurma1.innerHTML = '<option value="">Selecione o turno primeiro...</option>';
         jogoTurma2.innerHTML = '<option value="">Selecione o turno primeiro...</option>';
@@ -1045,6 +1098,9 @@ function initInterclasse() {
     }
     if (btnCadastrarJogo) {
         btnCadastrarJogo.addEventListener("click", handleCadastrarJogo);
+    }
+    if (btnExcluirJogo) {
+        btnExcluirJogo.addEventListener("click", handleExcluirJogo);
     }
 
     iniciarListenerInscricoes();
@@ -1159,6 +1215,7 @@ function iniciarListenerJogos() {
                     localJogo: data.localJogo
                 });
             });
+            atualizarSelectExcluirJogo();
             if (turnoSelecionadoJogos) {
                 renderizarJogos(turnoSelecionadoJogos);
             }
@@ -1826,7 +1883,7 @@ function fecharAdmin() {
     }
 }
 
-/* ============= 16) JOGOS - RENDERIZAÇÃO E CADASTRO ============= */
+/* ============= 16) JOGOS - RENDERIZAÇÃO, CADASTRO E EXCLUSÃO ============= */
 
 function renderizarJogos(turno) {
     const container = document.getElementById("listaJogosContainer");
@@ -1838,12 +1895,31 @@ function renderizarJogos(turno) {
         return;
     }
 
-    const filtrados = todosJogos.filter(function(j) {
-        return j.turno === turno;
+    const filtroSerieEl = document.getElementById("filtroSerieJogo");
+    const filtroDataEl = document.getElementById("filtroDataJogo");
+    const serieFiltro = filtroSerieEl ? filtroSerieEl.value : "";
+    const dataFiltro = filtroDataEl ? filtroDataEl.value : "";
+
+    let filtrados = todosJogos.filter(function(j) {
+        if (j.turno !== turno) return false;
+
+        // Filtro de série (opcional)
+        if (serieFiltro) {
+            const s1 = getSerieDigitFromTurma(j.turma1);
+            const s2 = getSerieDigitFromTurma(j.turma2);
+            if (s1 !== serieFiltro && s2 !== serieFiltro) return false;
+        }
+
+        // Filtro de data (opcional)
+        if (dataFiltro && j.dataJogo !== dataFiltro) {
+            return false;
+        }
+
+        return true;
     });
 
     if (filtrados.length === 0) {
-        container.textContent = "Ainda não há jogos cadastrados para este turno.";
+        container.textContent = "Não há jogos para os filtros selecionados.";
         return;
     }
 
@@ -1923,6 +1999,69 @@ async function handleCadastrarJogo(event) {
     } catch (error) {
         console.error("Erro ao cadastrar jogo:", error);
         alert("Erro ao cadastrar jogo. Tente novamente.");
+    }
+}
+
+function atualizarSelectExcluirJogo() {
+    const sel = document.getElementById("selectExcluirJogo");
+    if (!sel) return;
+    const valorAnterior = sel.value;
+    sel.innerHTML = "";
+    const optPadrao = document.createElement("option");
+    optPadrao.value = "";
+    optPadrao.textContent = "Selecione um jogo...";
+    sel.appendChild(optPadrao);
+
+    todosJogos.forEach(function(jogo) {
+        const opt = document.createElement("option");
+        opt.value = jogo.id;
+        const dataLabel = formatarDataBR(jogo.dataJogo);
+        const label =
+            (jogo.turno || "") +
+            " - " +
+            dataLabel +
+            " " +
+            (jogo.horarioJogo || "") +
+            " - " +
+            (jogo.turma1 || "") +
+            " vs " +
+            (jogo.turma2 || "");
+        opt.textContent = label.trim();
+        sel.appendChild(opt);
+    });
+
+    if (valorAnterior) {
+        sel.value = valorAnterior;
+    }
+}
+
+async function handleExcluirJogo() {
+    if (!isAdmin) {
+        alert("Apenas a área administrativa pode excluir jogos.");
+        return;
+    }
+    const sel = document.getElementById("selectExcluirJogo");
+    if (!sel) return;
+    const id = sel.value;
+    if (!id) {
+        alert("Selecione um jogo para excluir.");
+        return;
+    }
+
+    const jogo = todosJogos.find(function(j) { return j.id === id; });
+    const descricao = jogo
+        ? ((jogo.turma1 || "") + " vs " + (jogo.turma2 || "") + " - " + formatarDataBR(jogo.dataJogo) + " " + (jogo.horarioJogo || ""))
+        : "";
+
+    const conf = confirm("Tem certeza que deseja excluir este jogo?\n" + descricao);
+    if (!conf) return;
+
+    try {
+        await db.collection("jogos").doc(id).delete();
+        alert("Jogo excluído com sucesso.");
+    } catch (error) {
+        console.error("Erro ao excluir jogo:", error);
+        alert("Erro ao excluir jogo. Tente novamente.");
     }
 }
 </script>
