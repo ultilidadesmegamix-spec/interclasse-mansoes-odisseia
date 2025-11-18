@@ -177,6 +177,9 @@
             margin-bottom: 3px;
         }
         input[type="text"],
+        input[type="number"],
+        input[type="time"],
+        input[type="date"],
         select,
         textarea {
             width: 100%;
@@ -303,6 +306,38 @@
             margin-top: 0;
             font-size: 0.95rem;
             color: var(--azul);
+        }
+
+        /* Tabs da área admin */
+        .admin-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 12px 0 10px;
+            border-bottom: 1px solid #e1e4eb;
+            padding-bottom: 4px;
+        }
+        .admin-tab {
+            background: transparent;
+            border: none;
+            border-radius: 999px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 0.88rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            color: #444;
+        }
+        .admin-tab.active {
+            background: var(--azul-claro);
+            color: var(--azul);
+        }
+        .admin-tab-content {
+            display: none;
+        }
+        .admin-tab-content.active {
+            display: block;
         }
 
         /* Painel de inscritos começa escondido */
@@ -508,194 +543,257 @@
 
     <!-- ÁREA ADMINISTRATIVA (SOMENTE COM SENHA) -->
     <section class="card" id="adminSection">
-        <h2>Área Administrativa</h2>
+        <h2>Área Administrativa – Movimenta Odisseia</h2>
         <div class="admin-tag">Apenas para coordenação / organização do Movimenta Odisseia</div>
         <button id="btnFecharAdmin" class="btn btn-primaria" style="margin-top:8px; margin-bottom:6px;">
             ⬅ Fechar área administrativa
         </button>
         <small>Aqui aparecem todas as inscrições com detalhes e relatórios para chaveamento.</small>
 
-        <!-- BUSCA DE ALUNO -->
-        <div class="admin-actions">
-            <h3>Buscar aluno</h3>
-            <p style="font-size:0.84rem; margin:4px 0 8px;">
-                Digite o nome (ou parte do nome) para localizar na tabela de inscrições.
-            </p>
-            <input type="text" id="adminSearch" placeholder="Buscar por nome..." />
+        <!-- MENU DE ABAS -->
+        <div class="admin-tabs">
+            <button class="admin-tab active" data-tab="inscricoes">📋 Inscrições</button>
+            <button class="admin-tab" data-tab="relatorios">🧾 Relatórios</button>
+            <button class="admin-tab" data-tab="jogos">🏆 Jogos</button>
+            <button class="admin-tab" data-tab="placar">📊 Placar ao vivo</button>
+            <button class="admin-tab" data-tab="config">⚙️ Configurações</button>
         </div>
 
-        <!-- BLOCO DE EXCEÇÕES DE NOME -->
-        <div class="admin-actions">
-            <h3>Autorizar nome com 2 nomes</h3>
-            <p style="font-size:0.84rem; margin:4px 0 8px;">
-                Nomes com <strong>3 ou mais palavras</strong> entram normalmente.<br>
-                Se um aluno tiver apenas <strong>2 nomes</strong> e você quiser liberar, digite o nome exatamente como ele será escrito no formulário e clique em <em>"Autorizar"</em>.
-            </p>
-            <div style="display:flex; flex-wrap:wrap; gap:6px;">
-                <input type="text" id="nomeExcecao" placeholder="Nome a ser autorizado (igual o aluno vai digitar)" style="flex:1; min-width:200px;" />
-                <button id="btnAdicionarExcecao" class="btn btn-primaria">Autorizar nome</button>
-            </div>
-            <ul id="listaExcecoes" style="margin-top:8px; padding-left:18px; font-size:0.85rem;"></ul>
-        </div>
-
-        <!-- BLOCO DE CANCELAMENTO DE INSCRIÇÃO -->
-        <div class="admin-actions">
-            <h3>Cancelar inscrição</h3>
-            <p style="font-size:0.84rem; margin:4px 0 8px;">
-                Selecione um aluno para cancelar a inscrição. Isso remove o registro do banco e libera as vagas das modalidades daquela turma.
-            </p>
-            <div style="display:flex; flex-wrap:wrap; gap:6px;">
-                <select id="selectCancelar" style="flex:1; min-width:220px;">
-                    <option value="">Selecione um inscrito...</option>
-                </select>
-                <button id="btnCancelarInscricao" class="btn btn-primaria">Cancelar inscrição selecionada</button>
-            </div>
-        </div>
-
-        <!-- RELATÓRIO POR MODALIDADE / TURMA (COM BOTÃO) -->
-        <div class="admin-actions">
-            <h3>Relatório por modalidade / turma</h3>
-            <p style="font-size:0.84rem; margin:4px 0 8px;">
-                Selecione a turma e a modalidade, clique em <strong>Relatório</strong> e depois em <strong>Imprimir relatório</strong> para usar no chaveamento.
-            </p>
-            <div class="filtros">
-                <div>
-                    <label for="relTurma">Turma</label>
-                    <select id="relTurma">
-                        <option value="">Selecione...</option>
-                        <!-- turmas via JS -->
-                    </select>
-                </div>
-                <div>
-                    <label for="relModalidade">Modalidade</label>
-                    <select id="relModalidade">
-                        <option value="">Selecione...</option>
-                        <!-- modalidades via JS -->
-                    </select>
-                </div>
-                <div style="align-self:flex-end;">
-                    <button id="btnGerarRelatorio" class="btn btn-primaria">📄 Gerar relatório</button>
-                </div>
+        <!-- ABA: INSCRIÇÕES -->
+        <div id="tabInscricoes" class="admin-tab-content active">
+            <!-- BUSCA DE ALUNO -->
+            <div class="admin-actions">
+                <h3>Buscar aluno</h3>
+                <p style="font-size:0.84rem; margin:4px 0 8px;">
+                    Digite o nome (ou parte do nome) para localizar na tabela de inscrições.
+                </p>
+                <input type="text" id="adminSearch" placeholder="Buscar por nome..." />
             </div>
 
-            <table id="tabelaRelatorio">
-                <thead>
-                    <tr>
-                        <th>Nome</th>
-                        <th>E-mail</th>
-                        <th>Sexo</th>
-                        <th>Turma</th>
-                        <th>Turno</th>
-                        <th>Nº camisa</th>
-                        <th>Modalidades</th>
-                        <th>Observações</th>
-                        <th>Data/Hora</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- preenchido pelo botão -->
-                </tbody>
-            </table>
-
-            <button id="btnImprimirRelatorio" class="btn btn-primaria" style="margin-top:8px;">
-                🖨️ Imprimir relatório
-            </button>
-        </div>
-
-        <div style="margin-top:14px;">
-            <table id="tabelaAdmin">
-                <thead>
-                    <tr>
-                        <th>Nome</th>
-                        <th>E-mail</th>
-                        <th>Sexo</th>
-                        <th>Turma</th>
-                        <th>Turno</th>
-                        <th>Nº camisa</th>
-                        <th>Modalidades</th>
-                        <th>Observações</th>
-                        <th>Data/Hora</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- via JS -->
-                </tbody>
-            </table>
-        </div>
-
-        <!-- JOGOS: seção "Montar jogos" na área administrativa -->
-        <div class="admin-actions">
-            <h3>Montar jogos</h3>
-            <p style="font-size:0.84rem; margin:4px 0 8px;">
-                Cadastre as partidas informando turno, turmas, data, horário e local. Os jogos aparecerão automaticamente no botão <strong>Ver jogos</strong>.
-            </p>
-            <div class="grid-2">
-                <div>
-                    <label for="jogoTurno">Selecionar Turno</label>
-                    <select id="jogoTurno">
-                        <option value="">Selecione o turno...</option>
-                        <option value="Matutino">Matutino</option>
-                        <option value="Vespertino">Vespertino</option>
-                        <option value="Noturno">Noturno</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="jogoData">Selecionar Data do jogo</label>
-                    <input type="date" id="jogoData" />
-                </div>
-            </div>
-
-            <!-- NOVO: selecionar modalidade do jogo -->
-            <div style="margin-top:10px;">
-                <label for="jogoModalidade">Selecionar Modalidade</label>
-                <select id="jogoModalidade">
-                    <option value="">Selecione a modalidade...</option>
-                    <!-- opções via JS -->
-                </select>
-            </div>
-
-            <div class="grid-2" style="margin-top:10px;">
-                <div>
-                    <label for="jogoTurma1">Selecionar Turma 1</label>
-                    <select id="jogoTurma1">
-                        <option value="">Selecione o turno primeiro...</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="jogoTurma2">Selecionar Turma 2</label>
-                    <select id="jogoTurma2">
-                        <option value="">Selecione o turno primeiro...</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="grid-2" style="margin-top:10px;">
-                <div>
-                    <label for="jogoHorario">Selecionar Horário</label>
-                    <input type="time" id="jogoHorario" />
-                </div>
-                <div>
-                    <label for="jogoLocal">Selecionar Local</label>
-                    <input type="text" id="jogoLocal" placeholder="Ex: Quadra principal" />
-                </div>
-            </div>
-
-            <button id="btnCadastrarJogo" class="btn btn-primaria" style="margin-top:10px;">
-                Cadastrar jogo
-            </button>
-
-            <!-- EXCLUIR JOGO -->
-            <div style="margin-top:12px;">
-                <h4 style="margin:0 0 6px; font-size:0.9rem; color:var(--azul);">Excluir jogo cadastrado</h4>
-                <p style="font-size:0.8rem; margin:0 0 6px;">
-                    Selecione um jogo da lista e clique em <strong>Excluir jogo selecionado</strong> para removê-lo.
+            <!-- CANCELAR INSCRIÇÃO -->
+            <div class="admin-actions">
+                <h3>Cancelar inscrição</h3>
+                <p style="font-size:0.84rem; margin:4px 0 8px;">
+                    Selecione um aluno para cancelar a inscrição. Isso remove o registro do banco e libera as vagas das modalidades daquela turma.
                 </p>
                 <div style="display:flex; flex-wrap:wrap; gap:6px;">
-                    <select id="selectExcluirJogo" style="flex:1; min-width:220px;">
-                        <option value="">Selecione um jogo...</option>
+                    <select id="selectCancelar" style="flex:1; min-width:220px;">
+                        <option value="">Selecione um inscrito...</option>
                     </select>
-                    <button id="btnExcluirJogo" class="btn btn-primaria">Excluir jogo selecionado</button>
+                    <button id="btnCancelarInscricao" class="btn btn-primaria">Cancelar inscrição selecionada</button>
                 </div>
+            </div>
+
+            <!-- BLOCO DE EXCEÇÕES DE NOME -->
+            <div class="admin-actions">
+                <h3>Autorizar nome com 2 nomes</h3>
+                <p style="font-size:0.84rem; margin:4px 0 8px;">
+                    Nomes com <strong>3 ou mais palavras</strong> entram normalmente.<br>
+                    Se um aluno tiver apenas <strong>2 nomes</strong> e você quiser liberar, digite o nome exatamente como ele será escrito no formulário e clique em <em>"Autorizar"</em>.
+                </p>
+                <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                    <input type="text" id="nomeExcecao" placeholder="Nome a ser autorizado (igual o aluno vai digitar)" style="flex:1; min-width:200px;" />
+                    <button id="btnAdicionarExcecao" class="btn btn-primaria">Autorizar nome</button>
+                </div>
+                <ul id="listaExcecoes" style="margin-top:8px; padding-left:18px; font-size:0.85rem;"></ul>
+            </div>
+
+            <!-- TABELA COMPLETA DE INSCRIÇÕES -->
+            <div style="margin-top:14px;">
+                <table id="tabelaAdmin">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>E-mail</th>
+                            <th>Sexo</th>
+                            <th>Turma</th>
+                            <th>Turno</th>
+                            <th>Nº camisa</th>
+                            <th>Modalidades</th>
+                            <th>Observações</th>
+                            <th>Data/Hora</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ABA: RELATÓRIOS -->
+        <div id="tabRelatorios" class="admin-tab-content">
+            <!-- RELATÓRIO POR MODALIDADE / TURMA (COM BOTÃO) -->
+            <div class="admin-actions">
+                <h3>Relatório por modalidade / turma</h3>
+                <p style="font-size:0.84rem; margin:4px 0 8px;">
+                    Selecione a turma e a modalidade, clique em <strong>Relatório</strong> e depois em <strong>Imprimir relatório</strong> para usar no chaveamento.
+                </p>
+                <div class="filtros">
+                    <div>
+                        <label for="relTurma">Turma</label>
+                        <select id="relTurma">
+                            <option value="">Selecione...</option>
+                            <!-- turmas via JS -->
+                        </select>
+                    </div>
+                    <div>
+                        <label for="relModalidade">Modalidade</label>
+                        <select id="relModalidade">
+                            <option value="">Selecione...</option>
+                            <!-- modalidades via JS -->
+                        </select>
+                    </div>
+                    <div style="align-self:flex-end;">
+                        <button id="btnGerarRelatorio" class="btn btn-primaria">📄 Gerar relatório</button>
+                    </div>
+                </div>
+
+                <table id="tabelaRelatorio">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>E-mail</th>
+                            <th>Sexo</th>
+                            <th>Turma</th>
+                            <th>Turno</th>
+                            <th>Nº camisa</th>
+                            <th>Modalidades</th>
+                            <th>Observações</th>
+                            <th>Data/Hora</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- preenchido pelo botão -->
+                    </tbody>
+                </table>
+
+                <button id="btnImprimirRelatorio" class="btn btn-primaria" style="margin-top:8px;">
+                    🖨️ Imprimir relatório
+                </button>
+            </div>
+        </div>
+
+        <!-- ABA: JOGOS -->
+        <div id="tabJogos" class="admin-tab-content">
+            <!-- JOGOS: seção "Montar jogos" na área administrativa -->
+            <div class="admin-actions">
+                <h3>Montar jogos</h3>
+                <p style="font-size:0.84rem; margin:4px 0 8px;">
+                    Cadastre as partidas informando turno, turmas, data, horário e local. Os jogos aparecerão automaticamente no botão <strong>Ver jogos</strong>.
+                </p>
+                <div class="grid-2">
+                    <div>
+                        <label for="jogoTurno">Selecionar Turno</label>
+                        <select id="jogoTurno">
+                            <option value="">Selecione o turno...</option>
+                            <option value="Matutino">Matutino</option>
+                            <option value="Vespertino">Vespertino</option>
+                            <option value="Noturno">Noturno</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="jogoData">Selecionar Data do jogo</label>
+                        <input type="date" id="jogoData" />
+                    </div>
+                </div>
+
+                <!-- NOVO: selecionar modalidade do jogo -->
+                <div style="margin-top:10px;">
+                    <label for="jogoModalidade">Selecionar Modalidade</label>
+                    <select id="jogoModalidade">
+                        <option value="">Selecione a modalidade...</option>
+                        <!-- opções via JS -->
+                    </select>
+                </div>
+
+                <div class="grid-2" style="margin-top:10px;">
+                    <div>
+                        <label for="jogoTurma1">Selecionar Turma 1</label>
+                        <select id="jogoTurma1">
+                            <option value="">Selecione o turno primeiro...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="jogoTurma2">Selecionar Turma 2</label>
+                        <select id="jogoTurma2">
+                            <option value="">Selecione o turno primeiro...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid-2" style="margin-top:10px;">
+                    <div>
+                        <label for="jogoHorario">Selecionar Horário</label>
+                        <input type="time" id="jogoHorario" />
+                    </div>
+                    <div>
+                        <label for="jogoLocal">Selecionar Local</label>
+                        <input type="text" id="jogoLocal" placeholder="Ex: Quadra principal" />
+                    </div>
+                </div>
+
+                <button id="btnCadastrarJogo" class="btn btn-primaria" style="margin-top:10px;">
+                    Cadastrar jogo
+                </button>
+
+                <!-- EXCLUIR JOGO -->
+                <div style="margin-top:12px;">
+                    <h4 style="margin:0 0 6px; font-size:0.9rem; color:var(--azul);">Excluir jogo cadastrado</h4>
+                    <p style="font-size:0.8rem; margin:0 0 6px;">
+                        Selecione um jogo da lista e clique em <strong>Excluir jogo selecionado</strong> para removê-lo.
+                    </p>
+                    <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                        <select id="selectExcluirJogo" style="flex:1; min-width:220px;">
+                            <option value="">Selecione um jogo...</option>
+                        </select>
+                        <button id="btnExcluirJogo" class="btn btn-primaria">Excluir jogo selecionado</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA: PLACAR AO VIVO -->
+        <div id="tabPlacar" class="admin-tab-content">
+            <div class="admin-actions">
+                <h3>Placar ao vivo</h3>
+                <p style="font-size:0.84rem; margin:4px 0 8px;">
+                    Selecione um jogo em andamento e atualize os gols/pontos. Os alunos verão o placar na tela de <strong>Ver jogos</strong>.
+                </p>
+
+                <div class="grid-2">
+                    <div>
+                        <label for="selectJogoPlacar">Selecionar jogo</label>
+                        <select id="selectJogoPlacar">
+                            <option value="">Selecione um jogo...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid-2" style="margin-top:10px;">
+                    <div>
+                        <label id="labelPlacarTurma1">Placar Turma 1</label>
+                        <input type="number" id="placarTurma1" min="0" />
+                    </div>
+                    <div>
+                        <label id="labelPlacarTurma2">Placar Turma 2</label>
+                        <input type="number" id="placarTurma2" min="0" />
+                    </div>
+                </div>
+
+                <button id="btnSalvarPlacar" class="btn btn-primaria" style="margin-top:10px;">
+                    💾 Salvar placar
+                </button>
+            </div>
+        </div>
+
+        <!-- ABA: CONFIGURAÇÕES -->
+        <div id="tabConfig" class="admin-tab-content">
+            <div class="admin-actions">
+                <h3>Configurações do evento</h3>
+                <p style="font-size:0.84rem; margin:4px 0 0;">
+                    Espaço reservado para futuramente configurar datas limite de inscrição, regras de modalidades e personalização do evento.
+                </p>
             </div>
         </div>
     </section>
@@ -879,6 +977,14 @@ function initInterclasse() {
     const jogoModalidade = document.getElementById("jogoModalidade");
     const btnCadastrarJogo = document.getElementById("btnCadastrarJogo");
     const btnExcluirJogo = document.getElementById("btnExcluirJogo");
+
+    // PLACAR AO VIVO - elementos
+    const selectJogoPlacar = document.getElementById("selectJogoPlacar");
+    const inputPlacar1 = document.getElementById("placarTurma1");
+    const inputPlacar2 = document.getElementById("placarTurma2");
+    const labelPlacar1 = document.getElementById("labelPlacarTurma1");
+    const labelPlacar2 = document.getElementById("labelPlacarTurma2");
+    const btnSalvarPlacar = document.getElementById("btnSalvarPlacar");
 
     if (!selectTurma || !selectTurno || !filtroTurma || !filtroModalidade || !modalidadesContainer) {
         console.error("Erro ao carregar elementos principais. Verifique o HTML.");
@@ -1105,6 +1211,41 @@ function initInterclasse() {
         btnExcluirJogo.addEventListener("click", handleExcluirJogo);
     }
 
+    // PLACAR AO VIVO - eventos
+    if (selectJogoPlacar && inputPlacar1 && inputPlacar2 && labelPlacar1 && labelPlacar2) {
+        selectJogoPlacar.addEventListener("change", function() {
+            const id = this.value;
+            if (!id) {
+                labelPlacar1.textContent = "Placar Turma 1";
+                labelPlacar2.textContent = "Placar Turma 2";
+                inputPlacar1.value = "";
+                inputPlacar2.value = "";
+                return;
+            }
+            const jogo = todosJogos.find(function(j) { return j.id === id; });
+            if (jogo) {
+                labelPlacar1.textContent = (jogo.turma1 || "Turma 1") + " - gols/pontos";
+                labelPlacar2.textContent = (jogo.turma2 || "Turma 2") + " - gols/pontos";
+                if (jogo.placarTurma1 !== undefined && jogo.placarTurma1 !== null) {
+                    inputPlacar1.value = jogo.placarTurma1;
+                } else {
+                    inputPlacar1.value = "";
+                }
+                if (jogo.placarTurma2 !== undefined && jogo.placarTurma2 !== null) {
+                    inputPlacar2.value = jogo.placarTurma2;
+                } else {
+                    inputPlacar2.value = "";
+                }
+            }
+        });
+    }
+    if (btnSalvarPlacar) {
+        btnSalvarPlacar.addEventListener("click", handleSalvarPlacar);
+    }
+
+    // Abas da área admin
+    initAdminTabs();
+
     iniciarListenerInscricoes();
     iniciarListenerExcecoes();
     iniciarListenerJogos(); // JOGOS
@@ -1215,10 +1356,13 @@ function iniciarListenerJogos() {
                     dataJogo: data.dataJogo,
                     horarioJogo: data.horarioJogo,
                     localJogo: data.localJogo,
-                    modalidade: data.modalidade || ""
+                    modalidade: data.modalidade || "",
+                    placarTurma1: data.placarTurma1 !== undefined ? data.placarTurma1 : null,
+                    placarTurma2: data.placarTurma2 !== undefined ? data.placarTurma2 : null
                 });
             });
             atualizarSelectExcluirJogo();
+            atualizarSelectJogoPlacar();
             renderizarJogos();
         }, function(error) {
             console.error("Erro ao ouvir jogos:", error);
@@ -1863,6 +2007,17 @@ function abrirAdmin() {
     if (secInscritos) secInscritos.style.display = "none";
     admin.style.display = "block";
     renderizarTabelaAdmin();
+
+    // Ao abrir o admin, volta sempre para a aba de inscrições
+    const tabs = document.querySelectorAll(".admin-tab");
+    const contents = document.querySelectorAll(".admin-tab-content");
+    if (tabs.length && contents.length) {
+        tabs.forEach(t => t.classList.remove("active"));
+        contents.forEach(c => c.classList.remove("active"));
+        tabs[0].classList.add("active");
+        contents[0].classList.add("active");
+    }
+
     admin.scrollIntoView({ behavior: "smooth" });
 }
 
@@ -1942,6 +2097,16 @@ function renderizarJogos() {
         addLinha("Jogo", (jogo.turma1 || "") + " vs " + (jogo.turma2 || ""));
         addLinha("Local", jogo.localJogo || "-");
 
+        // Placar exibido para os alunos
+        let placarTexto = "A definir";
+        if (jogo.placarTurma1 !== undefined && jogo.placarTurma1 !== null &&
+            jogo.placarTurma2 !== undefined && jogo.placarTurma2 !== null) {
+            placarTexto = (jogo.turma1 || "") + " " + jogo.placarTurma1 +
+                " x " + jogo.placarTurma2 + " " + (jogo.turma2 || "");
+            placarTexto = placarTexto.trim();
+        }
+        addLinha("Placar", placarTexto);
+
         tabela.appendChild(tbody);
         wrap.appendChild(tabela);
         container.appendChild(wrap);
@@ -1985,6 +2150,8 @@ async function handleCadastrarJogo(event) {
             horarioJogo: horarioJogo,
             localJogo: localJogo,
             modalidade: modalidadeJogo,
+            placarTurma1: null,
+            placarTurma2: null,
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
         alert("Jogo cadastrado com sucesso.");
@@ -2035,6 +2202,82 @@ function atualizarSelectExcluirJogo() {
     }
 }
 
+/* PLACAR AO VIVO - select de jogos */
+function atualizarSelectJogoPlacar() {
+    const sel = document.getElementById("selectJogoPlacar");
+    if (!sel) return;
+    const valorAnterior = sel.value;
+    sel.innerHTML = "";
+    const optPadrao = document.createElement("option");
+    optPadrao.value = "";
+    optPadrao.textContent = "Selecione um jogo...";
+    sel.appendChild(optPadrao);
+
+    todosJogos.forEach(function(jogo) {
+        const opt = document.createElement("option");
+        opt.value = jogo.id;
+        const dataLabel = formatarDataBR(jogo.dataJogo);
+        const label =
+            (jogo.modalidade ? jogo.modalidade + " - " : "") +
+            (jogo.turma1 || "") +
+            " vs " +
+            (jogo.turma2 || "") +
+            " - " +
+            dataLabel +
+            (jogo.horarioJogo ? " " + jogo.horarioJogo : "");
+        opt.textContent = label.trim();
+        sel.appendChild(opt);
+    });
+
+    if (valorAnterior) {
+        sel.value = valorAnterior;
+    }
+}
+
+/* PLACAR AO VIVO - salvar placar */
+async function handleSalvarPlacar() {
+    if (!isAdmin) {
+        alert("Apenas a área administrativa pode salvar placar.");
+        return;
+    }
+    const sel = document.getElementById("selectJogoPlacar");
+    if (!sel) return;
+    const id = sel.value;
+    if (!id) {
+        alert("Selecione um jogo para atualizar o placar.");
+        return;
+    }
+
+    const input1 = document.getElementById("placarTurma1");
+    const input2 = document.getElementById("placarTurma2");
+    let v1 = input1.value;
+    let v2 = input2.value;
+
+    if (v1 === "" || v2 === "") {
+        alert("Preencha os dois placares.");
+        return;
+    }
+
+    v1 = parseInt(v1, 10);
+    v2 = parseInt(v2, 10);
+
+    if (isNaN(v1) || isNaN(v2) || v1 < 0 || v2 < 0) {
+        alert("Use apenas números inteiros maiores ou iguais a zero.");
+        return;
+    }
+
+    try {
+        await db.collection("jogos").doc(id).update({
+            placarTurma1: v1,
+            placarTurma2: v2
+        });
+        alert("Placar atualizado com sucesso.");
+    } catch (error) {
+        console.error("Erro ao salvar placar:", error);
+        alert("Erro ao salvar placar. Tente novamente.");
+    }
+}
+
 async function handleExcluirJogo() {
     if (!isAdmin) {
         alert("Apenas a área administrativa pode excluir jogos.");
@@ -2065,6 +2308,30 @@ async function handleExcluirJogo() {
         console.error("Erro ao excluir jogo:", error);
         alert("Erro ao excluir jogo. Tente novamente.");
     }
+}
+
+/* ============= 17) ABAS DA ÁREA ADMIN ============= */
+
+function initAdminTabs() {
+    const tabs = document.querySelectorAll(".admin-tab");
+    const contents = document.querySelectorAll(".admin-tab-content");
+    if (!tabs.length || !contents.length) return;
+
+    tabs.forEach(function(tab) {
+        tab.addEventListener("click", function() {
+            const target = tab.dataset.tab; // inscricoes, relatorios, jogos, placar, config
+            const targetId = "tab" + target.charAt(0).toUpperCase() + target.slice(1); // tabInscricoes...
+
+            tabs.forEach(t => t.classList.remove("active"));
+            contents.forEach(c => c.classList.remove("active"));
+
+            tab.classList.add("active");
+            const alvo = document.getElementById(targetId);
+            if (alvo) {
+                alvo.classList.add("active");
+            }
+        });
+    });
 }
 </script>
 </body>
