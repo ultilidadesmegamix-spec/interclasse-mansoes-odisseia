@@ -410,15 +410,24 @@
 
     <div class="filtros">
       <div>
+        <label for="filtroTurno">Turno</label>
+        <select id="filtroTurno">
+          <option value="">Selecione...</option>
+          <option value="Matutino">Matutino</option>
+          <option value="Vespertino">Vespertino</option>
+          <option value="Noturno">Noturno</option>
+        </select>
+      </div>
+      <div>
         <label for="filtroTurma">Turma</label>
         <select id="filtroTurma">
-          <option value="TODAS">Todas</option>
+          <option value="">Selecione o turno primeiro...</option>
         </select>
       </div>
       <div>
         <label for="filtroModalidade">Modalidade</label>
         <select id="filtroModalidade">
-          <option value="TODAS">Todas</option>
+          <option value="">Selecione a modalidade...</option>
         </select>
       </div>
     </div>
@@ -1148,13 +1157,33 @@ async function cancelarInscricao(){
 
 function renderPublico(){
   const corpo = document.querySelector("#tabelaPublica tbody");
-  const filtroT = document.getElementById("filtroTurma").value;
-  const filtroM = document.getElementById("filtroModalidade").value;
+  const filtroTurnoEl = document.getElementById("filtroTurno");
+  const filtroTurmaEl = document.getElementById("filtroTurma");
+  const filtroModEl = document.getElementById("filtroModalidade");
+
+  if (!corpo || !filtroTurnoEl || !filtroTurmaEl || !filtroModEl) return;
+
+  const turno = filtroTurnoEl.value;
+  const turma = filtroTurmaEl.value;
+  const mod = filtroModEl.value;
+
   corpo.innerHTML = "";
 
+  // Regra: só mostra inscrições quando turno, turma e modalidade forem selecionados
+  if (!turno || !turma || !mod){
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 2;
+    td.textContent = "Selecione turno, turma e modalidade para ver os inscritos.";
+    tr.appendChild(td);
+    corpo.appendChild(tr);
+    return;
+  }
+
   const lista = todasInscricoes.filter(ins => {
-    if (filtroT !== "TODAS" && ins.turma !== filtroT) return false;
-    if (filtroM !== "TODAS" && (!ins.modalidades || !ins.modalidades.includes(filtroM))) return false;
+    if (ins.turno !== turno) return false;
+    if (ins.turma !== turma) return false;
+    if (!ins.modalidades || !ins.modalidades.includes(mod)) return false;
     return true;
   });
 
@@ -1252,17 +1281,13 @@ function atualizarSelectsAdminPublico(){
   const adminMod = document.getElementById("adminFiltroModalidade");
   const selectCancel = document.getElementById("selectCancelar");
 
-  // turmas (uniques)
+  // turmas (uniques) apenas para admin/cancelar
   const turmasSet = new Set();
   todasInscricoes.forEach(i => { if (i.turma) turmasSet.add(i.turma); });
   const turmasOrd = Array.from(turmasSet).sort();
 
-  filtroTurma.innerHTML = '<option value="TODAS">Todas</option>';
-  turmasOrd.forEach(t => {
-    const opt = document.createElement("option");
-    opt.value = t; opt.textContent = t;
-    filtroTurma.appendChild(opt);
-  });
+  // NÃO mexemos mais no filtroTurma do painel de alunos aqui
+  // (ele é controlado pelo filtro de turno)
 
   adminTurma.innerHTML = '<option value="">Todas</option>';
   turmasOrd.forEach(t => {
@@ -1272,7 +1297,7 @@ function atualizarSelectsAdminPublico(){
   });
 
   // modalidades
-  filtroMod.innerHTML = '<option value="TODAS">Todas</option>';
+  filtroMod.innerHTML = '<option value="">Selecione a modalidade...</option>';
   adminMod.innerHTML = '<option value="">Todas</option>';
   MODALIDADES.forEach(m => {
     const o1 = document.createElement("option");
@@ -1569,7 +1594,7 @@ function init(){
     }
   });
 
-  // selects turno/turma
+  // selects turno/turma do formulário
   const turnoSel = document.getElementById("turno");
   const turmaSel = document.getElementById("turma");
   turmaSel.disabled = true;
@@ -1596,6 +1621,40 @@ function init(){
   });
   turmaSel.addEventListener("change", atualizarDisponibilidadeModalidades);
   document.getElementById("sexo").addEventListener("change", atualizarDisponibilidadeModalidades);
+
+  // filtros do painel de inscritos (turno/turma/modalidade)
+  const filtroTurno = document.getElementById("filtroTurno");
+  const filtroTurma = document.getElementById("filtroTurma");
+  const filtroModalidade = document.getElementById("filtroModalidade");
+
+  filtroTurma.innerHTML = '<option value="">Selecione o turno primeiro...</option>';
+  filtroModalidade.innerHTML = '<option value="">Selecione a modalidade...</option>';
+
+  filtroTurno.addEventListener("change", () => {
+    const turno = filtroTurno.value;
+    filtroTurma.innerHTML = "";
+    const optDefault = document.createElement("option");
+    if (!turno){
+      optDefault.value = "";
+      optDefault.textContent = "Selecione o turno primeiro...";
+      filtroTurma.appendChild(optDefault);
+    } else {
+      optDefault.value = "";
+      optDefault.textContent = "Selecione a turma...";
+      filtroTurma.appendChild(optDefault);
+      const turmasTurno = getTurmasPorTurno(turno);
+      turmasTurno.forEach(t => {
+        const opt = document.createElement("option");
+        opt.value = t;
+        opt.textContent = t;
+        filtroTurma.appendChild(opt);
+      });
+    }
+    renderPublico();
+  });
+
+  filtroTurma.addEventListener("change", renderPublico);
+  filtroModalidade.addEventListener("change", renderPublico);
 
   // jogos (admin) – atualizar turmas quando escolhe turno
   const jogoTurno = document.getElementById("jogoTurno");
@@ -1662,8 +1721,6 @@ function init(){
   document.getElementById("btnFecharAdmin").addEventListener("click", fecharAdmin);
 
   document.getElementById("formInscricao").addEventListener("submit", handleSubmitInscricao);
-  document.getElementById("filtroTurma").addEventListener("change", renderPublico);
-  document.getElementById("filtroModalidade").addEventListener("change", renderPublico);
 
   document.getElementById("adminFiltroNome").addEventListener("input", renderAdmin);
   document.getElementById("adminFiltroTurma").addEventListener("change", renderAdmin);
